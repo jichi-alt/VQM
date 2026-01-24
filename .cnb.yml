@@ -1,0 +1,16 @@
+# .cnb.yml
+$:
+  vscode:
+    - runner:
+        cpus: 8
+      docker:
+        image: docker.cnb.cool/nfeyre/default-dev-env:latest
+      services:
+        - vscode
+        - docker
+      env:
+        CNB_WELCOME_CMD: |
+          npx @z_ai/coding-helper
+      stages:
+        - name: start 1P
+          script: 1pctl start all
