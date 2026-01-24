@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VQM Observation Station</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#fbbd23",
+              "background-light": "#f4f4f5",
+              "background-dark": "#18181b",
+              "surface-dark": "#27272a",
+              "border-dark": "#27272a",
+              receipt: "#e8e6df",
+            },
+            fontFamily: {
+              display: ["Space Grotesk", "Noto Sans SC", "sans-serif"],
+              body: ["Noto Sans SC", "sans-serif"],
+              mono: ["Space Grotesk", "monospace"],
+            },
+            boxShadow: {
+              hard: "4px 4px 0px 0px #27272a",
+              "hard-sm": "2px 2px 0px 0px #27272a",
+            },
+            backgroundImage: {
+              striped:
+                "repeating-linear-gradient(45deg, #27272a 0, #27272a 1px, transparent 0, transparent 50%)",
+              "hazard-stripe":
+                "repeating-linear-gradient(45deg, #fbbd23, #fbbd23 10px, #000 10px, #000 20px)",
+            },
+            animation: {
+              scan: "scan 10s linear infinite",
+              "slide-in": "slideIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+              shake: "shake 0.1s ease-in-out infinite",
+            },
+            keyframes: {
+              scan: {
+                "0%": { backgroundPosition: "0 0" },
+                "100%": { backgroundPosition: "0 100vh" },
+              },
+              slideIn: {
+                "0%": { transform: "translateY(-120%)" },
+                "100%": { transform: "translateY(0)" },
+              },
+              shake: {
+                "0%, 100%": { transform: "translate(0, 0) rotate(0deg)" },
+                "25%": { transform: "translate(-2px, 2px) rotate(-1deg)" },
+                "50%": { transform: "translate(2px, -2px) rotate(1deg)" },
+                "75%": { transform: "translate(-2px, -2px) rotate(-1deg)" },
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f4f4f5;
+        border-left: 2px solid #27272a;
+      }
+      .dark ::-webkit-scrollbar-track {
+        background: #18181b;
+        border-left: 2px solid #3f3f46;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #27272a;
+      }
+      .dark ::-webkit-scrollbar-thumb {
+        background: #3f3f46;
+        border: 1px solid #18181b;
+      }
+      .dark ::-webkit-scrollbar-thumb:hover {
+        background: #fbbd23;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.13.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3"
+  }
+}
+</script>
+</head>
+  <body class="bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
+    <div id="root"></div>
+  </body>
+</html>

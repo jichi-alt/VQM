@@ -1,0 +1,5 @@
+{
+  "name": "VQM Observation Station",
+  "description": "A cyberpunk-styled existential observation station. Generates daily philosophical questions and archives human thought samples.",
+  "requestFramePermissions": []
+}
