@@ -1,22 +1,21 @@
 import { GoogleGenAI } from "@google/genai";
 import { QuestionData } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 export const generatePhilosophicalQuestion = async (): Promise<QuestionData> => {
   try {
     // In a real scenario, we would call the API.
     // To ensure the UI is functional without a key for the user immediately, we can provide a fallback
     // But per instructions, we implement the real call logic.
-    
+
     // Check if API KEY is set in env (simulated check as we can't access process.env in browser reliably without build tool injection usually)
     // Here we assume process.env.API_KEY is available or we use a fallback for demo purposes if it fails.
-    
+
     if (!process.env.API_KEY) {
         console.warn("No API Key found. Using fallback data.");
         return getFallbackQuestion();
     }
 
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: "Generate a single, short, profound philosophical or existential question in Chinese. It should be thought-provoking and slightly surreal. Do not include any intro text, just the question.",

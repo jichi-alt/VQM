@@ -47,6 +47,7 @@
               scan: "scan 10s linear infinite",
               "slide-in": "slideIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards",
               shake: "shake 0.1s ease-in-out infinite",
+              shimmer: "shimmer 2s linear infinite",
             },
             keyframes: {
               scan: {
@@ -62,6 +63,10 @@
                 "25%": { transform: "translate(-2px, 2px) rotate(-1deg)" },
                 "50%": { transform: "translate(2px, -2px) rotate(1deg)" },
                 "75%": { transform: "translate(-2px, -2px) rotate(-1deg)" },
+              },
+              shimmer: {
+                "0%": { transform: "translateX(-100%)" },
+                "100%": { transform: "translateX(100%)" },
               },
             },
           },
@@ -106,5 +111,6 @@
 </head>
   <body class="bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
     <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

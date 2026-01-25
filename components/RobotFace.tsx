@@ -7,7 +7,7 @@ interface RobotFaceProps {
 export const RobotFace: React.FC<RobotFaceProps> = ({ isVomiting = false }) => {
   return (
     <div className="flex flex-col items-center">
-      <h3 className="text-black font-black text-2xl mb-6 tracking-widest uppercase font-display">VQM-01 吐题机</h3>
+      <h3 className="text-black font-black text-2xl mb-6 tracking-widest uppercase font-display">问题呕吐机</h3>
       
       <div className={`mb-8 relative group cursor-pointer transition-transform duration-300 ${isVomiting ? 'animate-shake' : 'hover:scale-105'}`}>
         <div className="w-48 h-48 bg-border-dark relative flex items-center justify-center border-4 border-transparent hover:border-primary transition-colors duration-0">

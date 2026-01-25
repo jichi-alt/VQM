@@ -94,7 +94,7 @@ export const Home: React.FC = () => {
 
           <div className="flex justify-center mt-2">
              <button onClick={() => navigate('/archive')} className="text-xs font-mono underline decoration-dotted text-border-dark/70 hover:text-border-dark">
-                View Archive >
+                View Archive {">"}
              </button>
           </div>
         </div>

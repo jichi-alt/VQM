@@ -1,9 +1,46 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { X } from 'lucide-react';
 import { Scanline } from '../components/Scanline';
 import { Noise } from '../components/Noise';
 import { BARCODE_URL } from '../constants';
 import { QuestionData } from '../types';
+
+const SilentObserverModal = ({ isOpen, onClose, onConfirm, message }: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  message: string;
+}) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-500/20 backdrop-blur-[2px] animate-in fade-in duration-200">
+      <div className="w-[300px] bg-[#F4F4F5] border border-zinc-800 shadow-[4px_4px_0px_0px_#d4d4d8] animate-in zoom-in-95 duration-200 flex flex-col">
+        {/* Header: 仅有关闭按钮 */}
+        <div className="flex justify-end px-2 py-2">
+          <button onClick={onClose} className="text-zinc-300 hover:text-zinc-600 transition-colors">
+            <X size={14} />
+          </button>
+        </div>
+        {/* Body: 核心信息 */}
+        <div className="px-6 pb-2 pt-0">
+          <p className="text-sm text-zinc-800 font-bold leading-relaxed text-center">
+            {message}
+          </p>
+        </div>
+        {/* Footer: 按钮组 */}
+        <div className="flex items-center justify-center gap-4 p-6">
+          <button onClick={onClose} className="text-xs text-zinc-500 hover:text-zinc-800 transition-colors px-4 py-2">
+            取消
+          </button>
+          <button onClick={() => { onConfirm(); onClose(); }} className="text-xs font-bold text-zinc-100 bg-zinc-800 px-6 py-2 hover:bg-black transition-colors border border-transparent shadow-sm">
+            确定
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const DailyRecord: React.FC = () => {
   const navigate = useNavigate();
@@ -16,16 +53,20 @@ export const DailyRecord: React.FC = () => {
   };
   
   const [input, setInput] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const handleArchive = () => {
     // Check if input is empty and require confirmation
     if (!input.trim()) {
-      const confirmSave = window.confirm("什么都没写，确定要存入吗？");
-      if (!confirmSave) {
-        return;
-      }
+      setShowConfirmModal(true);
+      return;
     }
-    
+
+    // In a real app, save to DB here.
+    navigate('/archive');
+  };
+
+  const handleConfirmSave = () => {
     // In a real app, save to DB here.
     navigate('/archive');
   };
@@ -144,6 +185,13 @@ export const DailyRecord: React.FC = () => {
           </div>
         </footer>
       </div>
+
+      <SilentObserverModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleConfirmSave}
+        message="什么都没写，确定要存入吗？"
+      />
     </div>
   );
 };
