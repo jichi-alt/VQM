@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, X, Trash2, Activity, Trophy } from 'lucide-react';
 import { generatePhilosophicalQuestion } from '../services/geminiService';
 import { QuestionData } from '../types';
+import { MemoryFragment, getRandomFragment, MEMORY_FRAGMENTS } from '../services/memoryFragments';
 
 interface SilentObserverModalProps {
   isOpen: boolean;
@@ -142,6 +143,83 @@ const CheckInSuccessModal = ({ isOpen, onClose, day, isCompleted }: CheckInSucce
   );
 };
 
+// ==================== 记忆碎片弹窗 ====================
+interface MemoryFragmentModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  content: string;
+  chapter: number | 'final';
+  currentDay: number;
+}
+
+const MemoryFragmentModal = ({ isOpen, onClose, content, chapter, currentDay }: MemoryFragmentModalProps) => {
+  if (!isOpen) return null;
+
+  // 章节颜色
+  const chapterColors: Record<number | 'final', { bg: string; border: string; text: string }> = {
+    1: { bg: 'bg-zinc-800', border: 'border-zinc-600', text: 'text-zinc-300' },
+    2: { bg: 'bg-blue-900', border: 'border-blue-700', text: 'text-blue-200' },
+    3: { bg: 'bg-purple-900', border: 'border-purple-700', text: 'text-purple-200' },
+    final: { bg: 'bg-amber-900', border: 'border-amber-500', text: 'text-amber-100' }
+  };
+
+  const colors = chapterColors[chapter] || chapterColors[1];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className={`w-[340px] ${colors.bg} border-2 ${colors.border} shadow-[0_0_40px_rgba(0,0,0,0.5)] animate-in zoom-in-95 duration-300 flex flex-col overflow-hidden`}>
+
+        {/* 顶部：章节标签 + 关闭 */}
+        <div className="flex justify-between items-center px-4 py-3 border-b border-white/10">
+          <div className="flex items-center gap-2">
+            <span className={`text-xs font-mono ${colors.text} opacity-70`}>记忆碎片</span>
+            <span className={`text-xs font-bold ${colors.text}`}>
+              第{chapter === 'final' ? '终' : chapter}章
+            </span>
+          </div>
+          <button onClick={onClose} className={`${colors.text} hover:text-white transition-colors`}>
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* 中部：机器人头像 + 内容 */}
+        <div className="px-6 py-6 flex flex-col items-center">
+          {/* 机器人小头像 */}
+          <div className="w-16 h-16 bg-zinc-800 rounded-xl flex items-center justify-center mb-4 border border-zinc-600">
+            <div className="w-12 h-10 bg-zinc-100 rounded-lg flex flex-col items-center justify-center">
+              <div className="flex gap-2 mb-1">
+                <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+              </div>
+              <div className="w-3 h-1 bg-zinc-800"></div>
+            </div>
+          </div>
+
+          {/* 文字内容 */}
+          <p className={`text-sm leading-relaxed text-center ${colors.text} whitespace-pre-line`}>
+            {content.replace('{streak}', String(currentDay))}
+          </p>
+        </div>
+
+        {/* 底部：进度指示 */}
+        <div className="px-6 py-3 bg-black/20 border-t border-white/10">
+          <div className="flex items-center justify-between text-xs">
+            <span className={`${colors.text} opacity-60 font-mono`}>
+              DAY {currentDay} / 21
+            </span>
+            <span className={`${colors.text} opacity-60`}>
+              {chapter === 'final' ? '▓▓▓▓▓▓▓ 100%'
+               : chapter === 3 ? '▓▓▓▓▓▓░ 85%'
+               : chapter === 2 ? '▓▓▓░░░░ 40%'
+               : '▓░░░░░░ 15%'}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const QuestionVomitMachine: React.FC = () => {
   const [view, setView] = useState<'intro' | 'daily' | 'history'>('intro');
   const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(null);
@@ -172,6 +250,11 @@ export const QuestionVomitMachine: React.FC = () => {
     checkInHistory: [],
     longestStreak: 0
   });
+
+  // 记忆碎片相关状态
+  const [showMemoryModal, setShowMemoryModal] = useState(false);
+  const [currentMemoryFragment, setCurrentMemoryFragment] = useState<MemoryFragment | null>(null);
+  const [viewedFragmentIds, setViewedFragmentIds] = useState<string[]>([]);
 
   // ==================== 工具函数 ====================
 
@@ -464,6 +547,16 @@ export const QuestionVomitMachine: React.FC = () => {
 
     // 临时：在控制台显示 streak 数据（方便验证）
     console.log('🔥 Streak Data 初始化完成:', loadStreakData());
+
+    // 加载已看过的记忆碎片
+    try {
+      const saved = localStorage.getItem('qvm_viewed_fragments');
+      if (saved) {
+        setViewedFragmentIds(JSON.parse(saved));
+      }
+    } catch (error) {
+      console.error('Failed to load viewed fragments:', error);
+    }
   }, []);
 
   // 保存今日状态到 localStorage
@@ -474,6 +567,52 @@ export const QuestionVomitMachine: React.FC = () => {
       question,
       remainingRerolls: rerolls
     }));
+  };
+
+  // ==================== 记忆碎片系统 ====================
+
+  // 保存已看过的碎片
+  const saveViewedFragment = (fragmentId: string) => {
+    const newViewed = [...viewedFragmentIds, fragmentId];
+    setViewedFragmentIds(newViewed);
+    localStorage.setItem('qvm_viewed_fragments', JSON.stringify(newViewed));
+  };
+
+  // 触发记忆碎片的函数
+  const tryTriggerMemoryFragment = (probability: number) => {
+    const currentDay = streakData.currentStreak;
+
+    // 21天必触发最终结局
+    if (currentDay >= 21) {
+      const finalFragment = MEMORY_FRAGMENTS.find(f => f.id === 'final');
+      if (finalFragment && !viewedFragmentIds.includes('final')) {
+        setCurrentMemoryFragment(finalFragment);
+        setShowMemoryModal(true);
+        saveViewedFragment('final');
+        return;
+      }
+    }
+
+    // 里程碑天数必触发
+    const milestoneFragment = MEMORY_FRAGMENTS.find(
+      f => f.isMilestone && f.minDay === currentDay && !viewedFragmentIds.includes(f.id)
+    );
+    if (milestoneFragment) {
+      setCurrentMemoryFragment(milestoneFragment);
+      setShowMemoryModal(true);
+      saveViewedFragment(milestoneFragment.id);
+      return;
+    }
+
+    // 随机触发
+    if (Math.random() < probability) {
+      const fragment = getRandomFragment(currentDay, viewedFragmentIds);
+      if (fragment) {
+        setCurrentMemoryFragment(fragment);
+        setShowMemoryModal(true);
+        saveViewedFragment(fragment.id);
+      }
+    }
   };
 
   const handleSpitQuestion = async () => {
@@ -493,6 +632,9 @@ export const QuestionVomitMachine: React.FC = () => {
     setIsEditingHistory(false);
     saveTodayState(questionData, 1);
     setView('daily');
+
+    // 延迟触发记忆碎片（30%）
+    setTimeout(() => tryTriggerMemoryFragment(0.3), 500);
   };
 
   // 保存答案（覆盖模式）
@@ -543,6 +685,9 @@ export const QuestionVomitMachine: React.FC = () => {
 
       // 保存成功后跳转到历史页
       setView('history');
+
+      // 延迟触发记忆碎片（50%）
+      setTimeout(() => tryTriggerMemoryFragment(0.5), 300);
     } catch (error) {
       console.error('保存失败:', error);
       alert('保存失败，请重试');
@@ -791,7 +936,8 @@ export const QuestionVomitMachine: React.FC = () => {
                     setIsEditingHistory(false);
                     saveTodayState(questionData, remainingRerolls - 1);
 
-                    // 保持在当前页面，让用户看到新问题
+                    // 呕吐完成后直接进入第二个界面
+                    setView('daily');
                   }}
                   disabled={isVomiting || remainingRerolls <= 0}
                   className="w-full h-10 bg-zinc-200 border border-zinc-300 text-zinc-600 shadow-sm hover:bg-zinc-300 transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
@@ -812,16 +958,143 @@ export const QuestionVomitMachine: React.FC = () => {
               查看历史样本 {">"}
             </button>
 
-            {/* 临时测试按钮 - 测试打卡弹窗 */}
-            <button
-              onClick={() => {
-                setCheckInDay(2);
-                setShowCheckInModal(true);
-              }}
-              className="block w-full text-xs font-mono text-amber-600 hover:text-amber-800 transition-colors underline decoration-dashed"
-            >
-              [测试] 点击查看打卡弹窗 (第2天)
-            </button>
+            {/* ==================== 测试面板 ==================== */}
+            <details className="text-left">
+              <summary className="text-xs font-mono text-amber-600 hover:text-amber-800 cursor-pointer underline decoration-dashed select-none">
+                [测试面板] 点击展开调试选项
+              </summary>
+              <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded text-xs space-y-2">
+                <p className="font-bold text-amber-900 mb-2">🎮 记忆碎片测试工具</p>
+
+                {/* 设置打卡天数 */}
+                <div className="space-y-1 mb-3">
+                  <p className="font-mono text-amber-800">设置打卡天数：</p>
+                  <div className="flex gap-2 flex-wrap">
+                    <button
+                      onClick={() => {
+                        const newData = { ...streakData, currentStreak: 1, lastCheckIn: getTodayDate() };
+                        saveStreakData(newData);
+                        setStreakData(newData);
+                      }}
+                      className="px-2 py-1 bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 rounded"
+                    >第1天</button>
+                    <button
+                      onClick={() => {
+                        const newData = { ...streakData, currentStreak: 7, lastCheckIn: getTodayDate() };
+                        saveStreakData(newData);
+                        setStreakData(newData);
+                      }}
+                      className="px-2 py-1 bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 rounded"
+                    >第7天(里程碑)</button>
+                    <button
+                      onClick={() => {
+                        const newData = { ...streakData, currentStreak: 14, lastCheckIn: getTodayDate() };
+                        saveStreakData(newData);
+                        setStreakData(newData);
+                      }}
+                      className="px-2 py-1 bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 rounded"
+                    >第14天(里程碑)</button>
+                    <button
+                      onClick={() => {
+                        const newData = { ...streakData, currentStreak: 21, lastCheckIn: getTodayDate(), isCompleted: true };
+                        saveStreakData(newData);
+                        setStreakData(newData);
+                      }}
+                      className="px-2 py-1 bg-amber-400 border border-amber-600 hover:bg-amber-500 text-white rounded font-bold"
+                    >第21天(通关)</button>
+                  </div>
+                </div>
+
+                {/* 测试各章节碎片 */}
+                <div className="space-y-1 mb-3">
+                  <p className="font-mono text-amber-800">测试各章节随机碎片：</p>
+                  <div className="flex gap-2 flex-wrap">
+                    <button
+                      onClick={() => {
+                        const fragment = getRandomFragment(3, viewedFragmentIds);
+                        if (fragment) {
+                          setCurrentMemoryFragment(fragment);
+                          setShowMemoryModal(true);
+                          saveViewedFragment(fragment.id);
+                        } else {
+                          alert('第1章碎片已全部看完，请清除记录');
+                        }
+                      }}
+                      className="px-2 py-1 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 rounded"
+                    >第1章</button>
+                    <button
+                      onClick={() => {
+                        const fragment = getRandomFragment(8, viewedFragmentIds);
+                        if (fragment) {
+                          setCurrentMemoryFragment(fragment);
+                          setShowMemoryModal(true);
+                          saveViewedFragment(fragment.id);
+                        } else {
+                          alert('第2章碎片已全部看完，请清除记录');
+                        }
+                      }}
+                      className="px-2 py-1 bg-blue-200 hover:bg-blue-300 text-blue-900 rounded"
+                    >第2章</button>
+                    <button
+                      onClick={() => {
+                        const fragment = getRandomFragment(16, viewedFragmentIds);
+                        if (fragment) {
+                          setCurrentMemoryFragment(fragment);
+                          setShowMemoryModal(true);
+                          saveViewedFragment(fragment.id);
+                        } else {
+                          alert('第3章碎片已全部看完，请清除记录');
+                        }
+                      }}
+                      className="px-2 py-1 bg-purple-200 hover:bg-purple-300 text-purple-900 rounded"
+                    >第3章</button>
+                    <button
+                      onClick={() => {
+                        const finalFragment = MEMORY_FRAGMENTS.find(f => f.id === 'final');
+                        if (finalFragment) {
+                          setCurrentMemoryFragment(finalFragment);
+                          setShowMemoryModal(true);
+                        }
+                      }}
+                      className="px-2 py-1 bg-amber-400 hover:bg-amber-500 text-white rounded font-bold"
+                    >最终结局</button>
+                  </div>
+                </div>
+
+                {/* 数据管理 */}
+                <div className="space-y-1">
+                  <p className="font-mono text-amber-800">数据管理：</p>
+                  <div className="flex gap-2 flex-wrap">
+                    <button
+                      onClick={() => {
+                        setViewedFragmentIds([]);
+                        localStorage.removeItem('qvm_viewed_fragments');
+                        alert('已清除碎片记录，可以重新观看');
+                      }}
+                      className="px-2 py-1 bg-white border border-amber-300 hover:bg-amber-100 text-amber-700 rounded"
+                    >清除碎片记录</button>
+                    <button
+                      onClick={() => {
+                        if (confirm('确定要重置所有数据吗？包括打卡进度和碎片记录')) {
+                          localStorage.removeItem('qvm_streak');
+                          localStorage.removeItem('qvm_viewed_fragments');
+                          localStorage.removeItem('vqm_archives');
+                          localStorage.removeItem('vqm_today');
+                          window.location.reload();
+                        }
+                      }}
+                      className="px-2 py-1 bg-red-100 border border-red-300 hover:bg-red-200 text-red-700 rounded"
+                    >重置所有数据</button>
+                  </div>
+                </div>
+
+                <div className="mt-2 pt-2 border-t border-amber-200">
+                  <p className="font-mono text-amber-700">
+                    当前状态: Day {streakData.currentStreak} | 已看碎片: {viewedFragmentIds.length}
+                  </p>
+                </div>
+              </div>
+            </details>
           </div>
           </div>
         </div>
@@ -841,6 +1114,13 @@ export const QuestionVomitMachine: React.FC = () => {
         onClose={() => setShowCheckInModal(false)}
         day={checkInDay}
         isCompleted={checkInDay >= 21}
+      />
+      <MemoryFragmentModal
+        isOpen={showMemoryModal}
+        onClose={() => setShowMemoryModal(false)}
+        content={currentMemoryFragment?.content || ''}
+        chapter={currentMemoryFragment?.chapter || 1}
+        currentDay={streakData.currentStreak}
       />
       </>
     );
@@ -951,6 +1231,13 @@ export const QuestionVomitMachine: React.FC = () => {
         day={checkInDay}
         isCompleted={checkInDay >= 21}
       />
+      <MemoryFragmentModal
+        isOpen={showMemoryModal}
+        onClose={() => setShowMemoryModal(false)}
+        content={currentMemoryFragment?.content || ''}
+        chapter={currentMemoryFragment?.chapter || 1}
+        currentDay={streakData.currentStreak}
+      />
       </>
     );
   }
@@ -1047,6 +1334,13 @@ export const QuestionVomitMachine: React.FC = () => {
         onClose={() => setShowCheckInModal(false)}
         day={checkInDay}
         isCompleted={checkInDay >= 21}
+      />
+      <MemoryFragmentModal
+        isOpen={showMemoryModal}
+        onClose={() => setShowMemoryModal(false)}
+        content={currentMemoryFragment?.content || ''}
+        chapter={currentMemoryFragment?.chapter || 1}
+        currentDay={streakData.currentStreak}
       />
       </>
     );
