@@ -35,23 +35,23 @@ interface StreakData {
 const SilentObserverModal = ({ isOpen, onClose, onConfirm, message }: SilentObserverModalProps) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-500/20 backdrop-blur-[2px] animate-in fade-in duration-200">
-      <div className="w-[300px] bg-[#F4F4F5] border border-zinc-800 shadow-[4px_4px_0px_0px_#d4d4d8] animate-in zoom-in-95 duration-200 flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="w-[300px] bg-space-850/90 backdrop-blur-md border border-cyan-400/30 shadow-[4px_4px_0px_0px_rgba(34,211,238,0.2)] animate-in zoom-in-95 duration-200 flex flex-col hologram">
         <div className="flex justify-end px-2 py-2">
-          <button onClick={onClose} className="text-zinc-300 hover:text-zinc-600 transition-colors">
+          <button onClick={onClose} className="text-cyan-400/60 hover:text-amber-400 transition-colors">
             <X size={14} />
           </button>
         </div>
         <div className="px-6 pb-2 pt-0">
-          <p className="text-sm text-zinc-800 font-bold leading-relaxed text-center">
+          <p className="text-sm text-amber-100 font-bold leading-relaxed text-center whitespace-pre-line">
             {message}
           </p>
         </div>
         <div className="flex items-center justify-center gap-4 p-6">
-          <button onClick={onClose} className="text-xs text-zinc-500 hover:text-zinc-800 transition-colors px-4 py-2">
+          <button onClick={onClose} className="text-xs text-cyan-400/70 hover:text-cyan-400 transition-colors px-4 py-2">
             取消
           </button>
-          <button onClick={() => { onConfirm(); onClose(); }} className="text-xs font-bold text-zinc-100 bg-zinc-800 px-6 py-2 hover:bg-black transition-colors border border-transparent shadow-sm">
+          <button onClick={() => { onConfirm(); onClose(); }} className="text-xs font-bold text-space-900 bg-amber-400 hover:bg-amber-300 px-6 py-2 transition-colors border border-transparent rounded btn-3d">
             确定
           </button>
         </div>
@@ -71,14 +71,14 @@ const CheckInSuccessModal = ({ isOpen, onClose, day, isCompleted }: CheckInSucce
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/30 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="w-[320px] bg-white border-2 border-amber-400 shadow-[6px_6px_0px_0px_#fbbf24] animate-in zoom-in-95 duration-300 flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="w-[320px] bg-space-850/90 backdrop-blur-md border-2 border-amber-400 shadow-[6px_6px_0px_0px_rgba(251,191,36,0.3)] animate-in zoom-in-95 duration-300 flex flex-col overflow-hidden hologram relative">
         {/* 顶部装饰条 */}
-        <div className="bg-amber-400 h-2"></div>
+        <div className="bg-amber-400/90 h-2"></div>
 
         {/* 关闭按钮 */}
         <div className="flex justify-end px-3 py-2">
-          <button onClick={onClose} className="text-zinc-300 hover:text-zinc-600 transition-colors">
+          <button onClick={onClose} className="text-cyan-400/60 hover:text-amber-400 transition-colors">
             <X size={16} />
           </button>
         </div>
@@ -88,39 +88,39 @@ const CheckInSuccessModal = ({ isOpen, onClose, day, isCompleted }: CheckInSucce
           {/* 奖杯图标（完成态）或活动图标（进行中） */}
           <div className="flex justify-center mb-4">
             {isCompleted ? (
-              <div className="w-16 h-16 bg-amber-400 rounded-full flex items-center justify-center">
-                <Trophy size={32} className="text-white" />
+              <div className="w-16 h-16 bg-amber-400 rounded-full flex items-center justify-center shadow-lg shadow-amber-400/50">
+                <Trophy size={32} className="text-space-900" />
               </div>
             ) : (
-              <div className="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center">
+              <div className="w-16 h-16 bg-space-800 rounded-full flex items-center justify-center border-2 border-amber-400/50">
                 <Activity size={32} className="text-amber-400" />
               </div>
             )}
           </div>
 
           {/* 核心文案 */}
-          <p className="text-lg font-black text-zinc-900 mb-2 leading-relaxed">
+          <p className="text-lg font-black text-amber-100 mb-2 leading-relaxed">
             太好了，人类！
           </p>
-          <p className="text-xl font-black text-amber-500 mb-6 tracking-tight">
+          <p className="text-xl font-black text-amber-400 mb-6 tracking-tight glow-text">
             这是你主动思考的第 {day} 天
           </p>
 
           {/* 进度可视化 */}
-          <div className="flex gap-[1px] mb-6 h-2 justify-center">
+          <div className="flex gap-[1px] mb-6 h-2 justify-center progress-pipe">
             {[...Array(21)].map((_, i) => {
               const isActive = i < day;
               return (
                 <div
                   key={i}
-                  className={`w-1.5 rounded-[1px] ${
+                  className={`w-1.5 rounded-[1px] progress-segment ${
                     isActive
                       ? isCompleted
-                        ? 'bg-amber-400'
+                        ? 'bg-amber-400 progress-segment-active'
                         : i === day - 1
-                        ? 'bg-amber-400'
-                        : 'bg-zinc-800'
-                      : 'bg-zinc-200'
+                        ? 'bg-amber-400 progress-segment-active animate-pulse'
+                        : 'bg-amber-400/60'
+                      : 'bg-space-700'
                   }`}
                 ></div>
               );
@@ -132,7 +132,7 @@ const CheckInSuccessModal = ({ isOpen, onClose, day, isCompleted }: CheckInSucce
             onClick={() => {
               onClose();
             }}
-            className="w-full bg-zinc-800 text-white font-bold py-3 px-4 hover:bg-zinc-900 transition-colors flex items-center justify-center gap-2"
+            className="w-full bg-space-800 hover:bg-space-700 text-amber-100 border border-amber-400/30 font-bold py-3 px-4 hover:border-amber-400/50 transition-all flex items-center justify-center gap-2 btn-3d"
           >
             <span>现在开始真正的思考吧！</span>
             <span className="text-amber-400">→</span>
@@ -155,59 +155,64 @@ interface MemoryFragmentModalProps {
 const MemoryFragmentModal = ({ isOpen, onClose, content, chapter, currentDay }: MemoryFragmentModalProps) => {
   if (!isOpen) return null;
 
-  // 章节颜色
-  const chapterColors: Record<number | 'final', { bg: string; border: string; text: string }> = {
-    1: { bg: 'bg-zinc-800', border: 'border-zinc-600', text: 'text-zinc-300' },
-    2: { bg: 'bg-blue-900', border: 'border-blue-700', text: 'text-blue-200' },
-    3: { bg: 'bg-purple-900', border: 'border-purple-700', text: 'text-purple-200' },
-    final: { bg: 'bg-amber-900', border: 'border-amber-500', text: 'text-amber-100' }
+  // 星际日记风格 - 章节颜色
+  const chapterColors: Record<number | 'final', { bg: string; border: string; text: string; glow: string }> = {
+    1: { bg: 'bg-space-800/90', border: 'border-space-600', text: 'text-zinc-300', glow: 'shadow-zinc-500/20' },
+    2: { bg: 'bg-blue-900/80', border: 'border-cyan-500/50', text: 'text-cyan-100', glow: 'shadow-cyan-500/30' },
+    3: { bg: 'bg-purple-900/80', border: 'border-purple-500/50', text: 'text-purple-100', glow: 'shadow-purple-500/30' },
+    final: { bg: 'bg-amber-900/80', border: 'border-amber-400', text: 'text-amber-100', glow: 'shadow-amber-500/50' }
   };
 
   const colors = chapterColors[chapter] || chapterColors[1];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className={`w-[340px] ${colors.bg} border-2 ${colors.border} shadow-[0_0_40px_rgba(0,0,0,0.5)] animate-in zoom-in-95 duration-300 flex flex-col overflow-hidden`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-300 scanlines perspective-1000">
+      <div className={`w-[360px] ${colors.bg} border-2 ${colors.border} ${colors.glow} shadow-2xl flex flex-col overflow-hidden hologram relative flip-in`} style={{ transformStyle: 'preserve-3d' }}>
+
+        {/* 扫描线动画 */}
+        <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-amber-400/5 to-transparent animate-scanline"></div>
 
         {/* 顶部：章节标签 + 关闭 */}
-        <div className="flex justify-between items-center px-4 py-3 border-b border-white/10">
+        <div className="flex justify-between items-center px-4 py-3 border-b border-white/10 relative z-10">
           <div className="flex items-center gap-2">
-            <span className={`text-xs font-mono ${colors.text} opacity-70`}>记忆碎片</span>
-            <span className={`text-xs font-bold ${colors.text}`}>
+            <span className={`text-xs font-mono ${colors.text} opacity-70`}>● 记忆碎片</span>
+            <span className={`text-xs font-bold ${colors.text} ${chapter === 'final' ? 'glow-text' : ''}`}>
               第{chapter === 'final' ? '终' : chapter}章
             </span>
           </div>
-          <button onClick={onClose} className={`${colors.text} hover:text-white transition-colors`}>
+          <button onClick={onClose} className={`${colors.text} hover:text-amber-400 transition-colors`}>
             <X size={16} />
           </button>
         </div>
 
         {/* 中部：机器人头像 + 内容 */}
-        <div className="px-6 py-6 flex flex-col items-center">
-          {/* 机器人小头像 */}
-          <div className="w-16 h-16 bg-zinc-800 rounded-xl flex items-center justify-center mb-4 border border-zinc-600">
-            <div className="w-12 h-10 bg-zinc-100 rounded-lg flex flex-col items-center justify-center">
+        <div className="px-6 py-6 flex flex-col items-center relative z-20">
+          {/* 机器人小头像 - 破旧风格 + 3D浮动 */}
+          <div className="w-16 h-16 bg-space-800 rounded-xl flex items-center justify-center mb-4 border border-rust-500/30 robot-damaged relative float-3d depth-shadow">
+            {/* 扫描线 */}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-400/10 to-transparent animate-scanline rounded-xl"></div>
+            <div className="w-12 h-10 bg-space-850 rounded-lg flex flex-col items-center justify-center border border-space-700">
               <div className="flex gap-2 mb-1">
-                <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                <div className="w-3 h-3 bg-amber-400/90 rounded-full shadow-lg shadow-amber-400/30"></div>
+                <div className="w-3 h-3 bg-amber-400/60 rounded-full shadow-lg"></div>
               </div>
-              <div className="w-3 h-1 bg-zinc-800"></div>
+              <div className="w-3 h-1 bg-space-600 rounded-full"></div>
             </div>
           </div>
 
-          {/* 文字内容 */}
-          <p className={`text-sm leading-relaxed text-center ${colors.text} whitespace-pre-line`}>
+          {/* 文字内容 - 移除typing-cursor，确保显示 */}
+          <p className={`text-sm leading-relaxed text-center ${colors.text} whitespace-pre-line relative z-20`} style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
             {content.replace('{streak}', String(currentDay))}
           </p>
         </div>
 
         {/* 底部：进度指示 */}
-        <div className="px-6 py-3 bg-black/20 border-t border-white/10">
+        <div className="px-6 py-3 bg-black/30 border-t border-white/10 relative z-10">
           <div className="flex items-center justify-between text-xs">
             <span className={`${colors.text} opacity-60 font-mono`}>
               DAY {currentDay} / 21
             </span>
-            <span className={`${colors.text} opacity-60`}>
+            <span className={`${colors.text} opacity-80 font-mono`}>
               {chapter === 'final' ? '▓▓▓▓▓▓▓ 100%'
                : chapter === 3 ? '▓▓▓▓▓▓░ 85%'
                : chapter === 2 ? '▓▓▓░░░░ 40%'
@@ -789,114 +794,130 @@ export const QuestionVomitMachine: React.FC = () => {
   if (view === 'intro') {
     return (
       <>
-      <div className="min-h-screen bg-zinc-100 flex flex-col font-display">
+      <div className="min-h-screen space-bg flex flex-col font-display relative">
+        {/* 纸理纹理叠加 */}
+        <div className="absolute inset-0 paper-texture pointer-events-none"></div>
+
         {/* --- 顶部：Protocol-21 进度条 --- */}
-        <div className="w-full bg-white border-b-2 border-zinc-300 py-3 px-6 shadow-sm relative z-10">
+        <div className="w-full bg-space-900/80 backdrop-blur-sm border-b border-space-700 py-3 px-6 shadow-lg relative z-10">
           <div className="max-w-md mx-auto">
 
             {/* 头部信息 */}
-            <div className="flex justify-between items-end mb-3 border-b border-zinc-200 pb-2">
+            <div className="flex justify-between items-end mb-3 border-b border-space-700 pb-2">
               <div className="flex flex-col">
-                <span className="text-[10px] text-zinc-400 font-mono tracking-widest uppercase mb-0.5">
+                <span className="text-[10px] text-cyan-400/70 font-mono tracking-widest uppercase mb-0.5">
                   PROTOCOL-21
                 </span>
-                <div className="flex items-center gap-1.5 text-zinc-800">
+                <div className="flex items-center gap-1.5 text-amber-400">
                   {/* 图标：未完成显示 Activity，完成显示 Trophy */}
                   {streakData.isCompleted
-                    ? <Trophy size={14} className="text-amber-500" />
-                    : <Activity size={14} />
+                    ? <Trophy size={14} className="text-amber-400 glow-text" />
+                    : <Activity size={14} className="text-amber-400/80" />
                   }
-                  <span className="text-sm font-bold font-mono tracking-tight">
-                    {streakData.isCompleted ? "已完成挑战" : streakData.currentStreak === 0 ? "准备开始" : "进行中..."}
+                  <span className="text-sm font-bold font-mono tracking-tight text-amber-100">
+                    {streakData.isCompleted ? "文明重建" : streakData.currentStreak === 0 ? "准备开始" : "觉醒中..."}
                   </span>
                 </div>
               </div>
 
               <div className="text-right">
-                <span className="text-3xl font-black font-mono leading-none tracking-tighter text-zinc-900">
+                <span className="text-3xl font-black font-mono leading-none tracking-tighter text-amber-400 glow-text">
                   {String(streakData.currentStreak).padStart(2, '0')}
                 </span>
-                <span className="text-[10px] text-zinc-400 font-mono uppercase tracking-wider block mt-0.5">
+                <span className="text-[10px] text-cyan-400/60 font-mono uppercase tracking-wider block mt-0.5">
                   / 21 天
                 </span>
               </div>
             </div>
 
-            {/* 分段式进度条 (Segmented Bar) */}
-            <div className="flex gap-[2px] mb-2 h-3">
+            {/* 分段式进度条 (3D管道效果) */}
+            <div className="flex gap-[2px] mb-2 h-3 progress-pipe">
               {[...Array(21)].map((_, i) => {
                 const isActive = i < streakData.currentStreak;
 
-                // 样式逻辑
-                let bgClass = "bg-zinc-200"; // 默认/未来 (浅灰)
+                // 样式逻辑 - 星际日记风格
+                let bgClass = "bg-space-700/50"; // 默认/未来 (暗色)
 
                 if (isActive) {
                   if (streakData.isCompleted) {
-                    bgClass = "bg-amber-400"; // 完成态全金
+                    bgClass = "bg-amber-400 progress-segment-active"; // 完成态全金 + 发光
                   } else if (i === streakData.currentStreak - 1) {
-                    bgClass = "bg-amber-400 animate-pulse"; // 今日高亮 (金色 + 脉冲)
+                    bgClass = "bg-amber-400 progress-segment-active animate-pulse"; // 今日高亮 + 发光 + 脉冲
                   } else {
-                    bgClass = "bg-zinc-800"; // 过去已打卡 (深色)
+                    bgClass = "bg-amber-400/60"; // 过去已打卡 (半透明琥珀色)
                   }
                 }
 
                 return (
-                  <div key={i} className={`flex-1 rounded-[1px] transition-all duration-300 ${bgClass}`}></div>
+                  <div key={i} className={`flex-1 rounded-[1px] transition-all duration-300 progress-segment ${bgClass}`}></div>
                 );
               })}
             </div>
 
             {/* 底部微文案 */}
-            <div className="flex justify-between items-center text-[10px] text-zinc-400 font-mono">
-              <span>状态: {streakData.isCompleted ? "已完成" : "进行中"}</span>
-              <span>{streakData.isCompleted ? "100%" : `${Math.round((streakData.currentStreak/21)*100)}%`}</span>
+            <div className="flex justify-between items-center text-[10px] text-cyan-400/60 font-mono">
+              <span>记忆恢复: {streakData.isCompleted ? "100%" : `${Math.round((streakData.currentStreak/21)*100)}%`}</span>
+              <span className="text-amber-400/80">文明重建进度</span>
             </div>
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col items-center justify-center p-6">
+        <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-0">
           <div className="w-full max-w-md">
-          {/* Robot Face */}
-          <div className="flex flex-col items-center mb-8">
-            <h3 className="text-black font-black text-2xl mb-6 tracking-widest uppercase">问题呕吐机</h3>
-            <div className={`mb-8 relative ${isVomiting ? 'animate-shake' : ''}`}>
-              <div className="w-48 h-48 bg-zinc-800 rounded-2xl flex items-center justify-center">
-                <div className="w-40 h-32 bg-zinc-100 rounded-xl flex flex-col items-center justify-center">
-                  <div className="flex gap-6 mb-2">
-                    <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
-                      <div className="w-2 h-2 bg-zinc-800 animate-pulse"></div>
+          {/* Robot Face - 破旧机器人 + 3D浮动 */}
+          <div className="flex flex-col items-center mb-8 perspective-1000">
+            <h3 className="text-amber-400 font-black text-2xl mb-6 tracking-widest uppercase glow-text">星际日记</h3>
+            <div className={`mb-8 relative ${isVomiting ? 'animate-shake' : 'float-3d'}`}>
+              {/* 机器人外壳 - 添加破损效果 */}
+              <div className="w-48 h-48 bg-space-800 rounded-2xl flex items-center justify-center robot-damaged relative border-2 border-rust-500/30 shadow-2xl depth-shadow">
+                {/* 锈迹装饰 */}
+                <div className="absolute top-4 right-4 w-8 h-1 bg-rust-400/40 rotate-45"></div>
+                <div className="absolute bottom-6 left-6 w-6 h-1 bg-rust-400/30 -rotate-12"></div>
+
+                {/* 机器人脸 */}
+                <div className="w-40 h-32 bg-space-850 rounded-xl flex flex-col items-center justify-center border border-space-700 relative overflow-hidden layered">
+                  {/* 扫描线效果 */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-400/5 to-transparent animate-scanline"></div>
+
+                  <div className="flex gap-6 mb-2 relative z-10">
+                    {/* 左眼 - 完整 */}
+                    <div className="w-8 h-8 bg-amber-400 rounded-full flex items-center justify-center shadow-lg shadow-amber-400/50">
+                      <div className="w-2 h-2 bg-space-900 animate-pulse"></div>
                     </div>
-                    <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
-                      <div className="w-2 h-2 bg-zinc-800 animate-pulse"></div>
+                    {/* 右眼 - 损坏（闪烁） */}
+                    <div className="w-8 h-8 bg-amber-400/70 rounded-full flex items-center justify-center shadow-lg shadow-amber-400/30 relative">
+                      <div className="w-2 h-2 bg-space-900/70 animate-pulse" style={{ animationDuration: '0.5s' }}></div>
+                      {/* 损坏痕迹 */}
+                      <div className="absolute top-0 right-0 w-3 h-0.5 bg-rust-400 rotate-45"></div>
                     </div>
                   </div>
-                  <div className={`bg-zinc-800 mt-2 transition-all ${isVomiting ? 'h-12 w-20' : 'h-1 w-16'}`}></div>
+                  <div className={`bg-space-700 mt-2 transition-all ${isVomiting ? 'h-12 w-20' : 'h-1 w-16'} rounded-full`}></div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* 状态显示 */}
-          <div className="w-full border border-dashed border-zinc-300 bg-white/50 p-3 mb-8 text-center">
-            <p className="font-mono text-xs text-zinc-600 font-bold">
-              STATUS: <span className={isVomiting ? "text-yellow-600 animate-pulse" : "text-green-600"}>
-                {isVomiting ? "正在生成..." : hasVomitedToday ? "今日已抽题" : "正在等待输入..."}
+          {/* 状态显示 - 全息卡片风格 */}
+          <div className="w-full border border-dashed border-cyan-400/30 bg-space-850/50 backdrop-blur-sm p-3 mb-8 text-center hologram">
+            <p className="font-mono text-xs text-cyan-400/90 font-bold">
+              STATUS: <span className={isVomiting ? "text-amber-400 animate-pulse glow-text" : "text-amber-400/80"}>
+                {isVomiting ? "正在生成..." : hasVomitedToday ? "今日已抽题" : "等待输入..."}
               </span>
             </p>
           </div>
 
           {/* 核心逻辑：根据 hasVomitedToday 显示不同按钮 */}
           {!hasVomitedToday ? (
-            // ========== 未抽题：显示大按钮 ==========
+            // ========== 未抽题：显示大按钮 - 3D按压效果 ==========
             <button
               onClick={handleSpitQuestion}
               disabled={isVomiting}
-              className="w-full h-16 bg-yellow-400 border-4 border-zinc-800 shadow-[4px_4px_0px_0px_#d4d4d8] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-3 hover:brightness-110 disabled:grayscale"
+              className="w-full h-16 bg-amber-400/90 hover:bg-amber-400 border-2 border-amber-500 btn-3d flex items-center justify-center gap-3 disabled:grayscale disabled:opacity-50 hologram"
             >
-              <span className="text-zinc-800 text-xl font-black tracking-widest uppercase">
+              <span className="text-space-900 text-xl font-black tracking-widest uppercase">
                 {isVomiting ? "CALCULATING..." : "吐一个问题"}
               </span>
-              <span className="bg-zinc-800 text-yellow-400 p-1">
+              <span className="bg-space-900 text-amber-400 p-1 rounded">
                 →
               </span>
             </button>
@@ -909,13 +930,13 @@ export const QuestionVomitMachine: React.FC = () => {
                   setIsEditingHistory(false);
                   setView('daily');
                 }}
-                className="w-full h-14 bg-zinc-800 border-2 border-zinc-800 text-white shadow-lg active:translate-x-[1px] active:translate-y-[1px] active:shadow-sm transition-all flex items-center justify-center gap-2 hover:bg-zinc-700"
+                className="w-full h-14 bg-space-850/80 hover:bg-space-850 border border-cyan-400/30 text-amber-100 btn-3d flex items-center justify-center gap-2 hologram"
               >
-                <span className="material-symbols-outlined">today</span>
-                <span className="font-bold tracking-wide">查看今日样本 (Today)</span>
+                <span className="material-symbols-outlined text-cyan-400">today</span>
+                <span className="font-bold tracking-wide">查看今日样本</span>
               </button>
 
-              {/* 强制重置按钮：直接执行重抽逻辑 */}
+              {/* 强制重置按钮 */}
               {remainingRerolls > 0 && !isDbEmpty && (
                 <button
                   onClick={async () => {
@@ -940,10 +961,10 @@ export const QuestionVomitMachine: React.FC = () => {
                     setView('daily');
                   }}
                   disabled={isVomiting || remainingRerolls <= 0}
-                  className="w-full h-10 bg-zinc-200 border border-zinc-300 text-zinc-600 shadow-sm hover:bg-zinc-300 transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full h-10 bg-space-700/50 hover:bg-space-700/70 border border-space-600 text-cyan-400/80 hover:text-cyan-400 btn-3d flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed hologram"
                 >
                   <span className="material-symbols-outlined text-sm">refresh</span>
-                  <span>对样本不满意？强制重置 (剩余: {remainingRerolls})</span>
+                  <span>不满意？强制重置 (剩余: {remainingRerolls})</span>
                 </button>
               )}
             </div>
@@ -953,22 +974,22 @@ export const QuestionVomitMachine: React.FC = () => {
           <div className="mt-8 text-center space-y-3">
             <button
               onClick={() => setView('history')}
-              className="text-sm font-mono text-zinc-500 hover:text-zinc-800 transition-colors underline decoration-dotted"
+              className="text-sm font-mono text-cyan-400/60 hover:text-cyan-400 transition-colors underline decoration-dotted"
             >
               查看历史样本 {">"}
             </button>
 
             {/* ==================== 测试面板 ==================== */}
             <details className="text-left">
-              <summary className="text-xs font-mono text-amber-600 hover:text-amber-800 cursor-pointer underline decoration-dashed select-none">
+              <summary className="text-xs font-mono text-amber-400/60 hover:text-amber-400 cursor-pointer underline decoration-dashed select-none">
                 [测试面板] 点击展开调试选项
               </summary>
-              <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded text-xs space-y-2">
-                <p className="font-bold text-amber-900 mb-2">🎮 记忆碎片测试工具</p>
+              <div className="mt-3 p-3 bg-space-850/80 backdrop-blur-sm border border-amber-400/20 rounded text-xs space-y-2 hologram">
+                <p className="font-bold text-amber-400 mb-2">🎮 记忆碎片测试工具</p>
 
                 {/* 设置打卡天数 */}
                 <div className="space-y-1 mb-3">
-                  <p className="font-mono text-amber-800">设置打卡天数：</p>
+                  <p className="font-mono text-cyan-400/80">设置打卡天数：</p>
                   <div className="flex gap-2 flex-wrap">
                     <button
                       onClick={() => {
@@ -976,7 +997,7 @@ export const QuestionVomitMachine: React.FC = () => {
                         saveStreakData(newData);
                         setStreakData(newData);
                       }}
-                      className="px-2 py-1 bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 rounded"
+                      className="px-2 py-1 bg-space-700/50 hover:bg-space-700 border border-space-600 text-cyan-400 rounded"
                     >第1天</button>
                     <button
                       onClick={() => {
@@ -984,7 +1005,7 @@ export const QuestionVomitMachine: React.FC = () => {
                         saveStreakData(newData);
                         setStreakData(newData);
                       }}
-                      className="px-2 py-1 bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 rounded"
+                      className="px-2 py-1 bg-space-700/50 hover:bg-space-700 border border-space-600 text-cyan-400 rounded"
                     >第7天(里程碑)</button>
                     <button
                       onClick={() => {
@@ -992,7 +1013,7 @@ export const QuestionVomitMachine: React.FC = () => {
                         saveStreakData(newData);
                         setStreakData(newData);
                       }}
-                      className="px-2 py-1 bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 rounded"
+                      className="px-2 py-1 bg-space-700/50 hover:bg-space-700 border border-space-600 text-cyan-400 rounded"
                     >第14天(里程碑)</button>
                     <button
                       onClick={() => {
@@ -1000,14 +1021,14 @@ export const QuestionVomitMachine: React.FC = () => {
                         saveStreakData(newData);
                         setStreakData(newData);
                       }}
-                      className="px-2 py-1 bg-amber-400 border border-amber-600 hover:bg-amber-500 text-white rounded font-bold"
+                      className="px-2 py-1 bg-amber-400/90 border border-amber-500 hover:bg-amber-400 text-space-900 rounded font-bold"
                     >第21天(通关)</button>
                   </div>
                 </div>
 
                 {/* 测试各章节碎片 */}
                 <div className="space-y-1 mb-3">
-                  <p className="font-mono text-amber-800">测试各章节随机碎片：</p>
+                  <p className="font-mono text-cyan-400/80">测试各章节随机碎片：</p>
                   <div className="flex gap-2 flex-wrap">
                     <button
                       onClick={() => {
@@ -1020,7 +1041,7 @@ export const QuestionVomitMachine: React.FC = () => {
                           alert('第1章碎片已全部看完，请清除记录');
                         }
                       }}
-                      className="px-2 py-1 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 rounded"
+                      className="px-2 py-1 bg-space-800/50 hover:bg-space-800 border border-space-600 text-amber-400/80 rounded"
                     >第1章</button>
                     <button
                       onClick={() => {
@@ -1033,7 +1054,7 @@ export const QuestionVomitMachine: React.FC = () => {
                           alert('第2章碎片已全部看完，请清除记录');
                         }
                       }}
-                      className="px-2 py-1 bg-blue-200 hover:bg-blue-300 text-blue-900 rounded"
+                      className="px-2 py-1 bg-blue-900/50 hover:bg-blue-900/70 border border-blue-700/50 text-blue-200 rounded"
                     >第2章</button>
                     <button
                       onClick={() => {
@@ -1046,7 +1067,7 @@ export const QuestionVomitMachine: React.FC = () => {
                           alert('第3章碎片已全部看完，请清除记录');
                         }
                       }}
-                      className="px-2 py-1 bg-purple-200 hover:bg-purple-300 text-purple-900 rounded"
+                      className="px-2 py-1 bg-purple-900/50 hover:bg-purple-900/70 border border-purple-700/50 text-purple-200 rounded"
                     >第3章</button>
                     <button
                       onClick={() => {
@@ -1056,14 +1077,14 @@ export const QuestionVomitMachine: React.FC = () => {
                           setShowMemoryModal(true);
                         }
                       }}
-                      className="px-2 py-1 bg-amber-400 hover:bg-amber-500 text-white rounded font-bold"
+                      className="px-2 py-1 bg-amber-400/90 hover:bg-amber-400 border border-amber-500 text-space-900 rounded font-bold glow-text"
                     >最终结局</button>
                   </div>
                 </div>
 
                 {/* 数据管理 */}
                 <div className="space-y-1">
-                  <p className="font-mono text-amber-800">数据管理：</p>
+                  <p className="font-mono text-cyan-400/80">数据管理：</p>
                   <div className="flex gap-2 flex-wrap">
                     <button
                       onClick={() => {
@@ -1071,7 +1092,7 @@ export const QuestionVomitMachine: React.FC = () => {
                         localStorage.removeItem('qvm_viewed_fragments');
                         alert('已清除碎片记录，可以重新观看');
                       }}
-                      className="px-2 py-1 bg-white border border-amber-300 hover:bg-amber-100 text-amber-700 rounded"
+                      className="px-2 py-1 bg-space-700/50 hover:bg-space-700 border border-space-600 text-cyan-400/80 rounded"
                     >清除碎片记录</button>
                     <button
                       onClick={() => {
@@ -1083,13 +1104,13 @@ export const QuestionVomitMachine: React.FC = () => {
                           window.location.reload();
                         }
                       }}
-                      className="px-2 py-1 bg-red-100 border border-red-300 hover:bg-red-200 text-red-700 rounded"
+                      className="px-2 py-1 bg-red-900/30 hover:bg-red-900/50 border border-red-700/50 text-red-400 rounded"
                     >重置所有数据</button>
                   </div>
                 </div>
 
-                <div className="mt-2 pt-2 border-t border-amber-200">
-                  <p className="font-mono text-amber-700">
+                <div className="mt-2 pt-2 border-t border-amber-400/20">
+                  <p className="font-mono text-amber-400/70">
                     当前状态: Day {streakData.currentStreak} | 已看碎片: {viewedFragmentIds.length}
                   </p>
                 </div>
@@ -1130,40 +1151,44 @@ export const QuestionVomitMachine: React.FC = () => {
   if (view === 'daily' && currentQuestion) {
     return (
       <>
-      <div className="min-h-screen bg-zinc-900 text-white p-6">
-        {/* 统一样式的返回按钮 */}
+      <div className="min-h-screen space-bg text-amber-100 p-6 relative">
+        {/* 纸理纹理叠加 */}
+        <div className="absolute inset-0 paper-texture pointer-events-none"></div>
+
+        <div className="relative z-10 max-w-2xl mx-auto">
+        {/* 统一样式的返回按钮 - 星际风格 */}
         <button onClick={() => {
           setView('intro');
           setIsEditingHistory(false);
-        }} className="self-start text-zinc-400 mb-6 flex items-center gap-1 text-sm hover:text-zinc-800 transition-colors">
+        }} className="self-start text-cyan-400/70 hover:text-cyan-400 mb-6 flex items-center gap-1 text-sm transition-colors">
           <ArrowLeft size={14} /> 返回观测站
         </button>
 
-        {/* 问题票据 */}
-        <div className="bg-zinc-100 text-zinc-900 p-6 rounded-lg mb-6 shadow-lg">
-          <div className="flex justify-between items-center border-b-2 border-dashed border-zinc-300 pb-2 mb-4">
-            <p className="text-zinc-500 text-xs font-mono">TICKET #{currentQuestion.ticketNum}</p>
-            <p className="text-zinc-500 text-xs font-mono">{currentQuestion.date}</p>
+        {/* 问题票据 - 全息卡片风格 */}
+        <div className="bg-space-850/80 backdrop-blur-sm border border-cyan-400/30 p-6 rounded-lg mb-6 shadow-xl hologram depth-shadow">
+          <div className="flex justify-between items-center border-b border-dashed border-cyan-400/30 pb-2 mb-4">
+            <p className="text-cyan-400/70 text-xs font-mono">TICKET #{currentQuestion.ticketNum}</p>
+            <p className="text-cyan-400/70 text-xs font-mono">{currentQuestion.date}</p>
           </div>
-          <h2 className="text-xl font-bold mb-2">{currentQuestion.text}</h2>
-          <div className="flex justify-between items-end opacity-40 mt-4">
-            <div className="h-8 w-32 bg-zinc-300"></div>
-            <span className="text-[10px] font-mono">VQM-REF-{currentQuestion.id}</span>
+          <h2 className="text-xl font-bold mb-2 text-amber-100">{currentQuestion.text}</h2>
+          <div className="flex justify-between items-end opacity-30 mt-4">
+            <div className="h-8 w-32 bg-cyan-400/20"></div>
+            <span className="text-[10px] font-mono text-cyan-400/60">VQM-REF-{currentQuestion.id}</span>
           </div>
         </div>
 
-        {/* 输入区域 */}
+        {/* 输入区域 - 星际终端风格 */}
         <div className="mb-6">
-          <label className="block text-zinc-500 text-xs font-mono mb-2">
+          <label className="block text-cyan-400/70 text-xs font-mono mb-2">
             INPUT BUFFER // WRITE ACCESS
           </label>
           <textarea
             value={userInput}
             onChange={(e) => setUserInput(e.target.value)}
-            className="w-full min-h-[180px] bg-zinc-800 border border-zinc-700 rounded p-4 text-white focus:outline-none focus:border-yellow-400 resize-none"
+            className="w-full min-h-[180px] bg-space-800/80 border border-space-700 rounded-lg p-4 text-amber-100 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/30 resize-none backdrop-blur-sm"
             placeholder="在这里捕捉你的意识火花..."
           />
-          <div className="flex justify-between items-center mt-2 text-zinc-500 text-xs font-mono">
+          <div className="flex justify-between items-center mt-2 text-cyan-400/60 text-xs font-mono">
             <span>LN: {userInput.split('\n').length}</span>
             <span>COL: {userInput.length}</span>
           </div>
@@ -1171,7 +1196,7 @@ export const QuestionVomitMachine: React.FC = () => {
 
         {/* 操作按钮 */}
         <div className="space-y-3">
-          {/* 保存按钮 */}
+          {/* 保存按钮 - 3D按压效果 */}
           <div>
             <button
               onClick={() => {
@@ -1181,7 +1206,7 @@ export const QuestionVomitMachine: React.FC = () => {
                   handleArchive();
                 }
               }}
-              className="w-full bg-black border border-zinc-700 hover:border-yellow-400 py-4 px-6 flex items-center justify-center gap-3 transition-colors"
+              className="w-full bg-amber-400/90 hover:bg-amber-400 border-2 border-amber-500 text-space-900 btn-3d py-4 px-6 flex items-center justify-center gap-3 hologram"
             >
               <span className="material-symbols-outlined">archive</span>
               <span className="font-bold tracking-wider text-sm uppercase">存入人类思想样本库</span>
@@ -1190,7 +1215,7 @@ export const QuestionVomitMachine: React.FC = () => {
             {/* 保存时间反馈 */}
             {lastSavedTime && (
               <div className="text-center mt-2">
-                <span className="text-xs text-zinc-500 font-mono">
+                <span className="text-xs text-cyan-400/70 font-mono">
                   上次保存: {lastSavedTime}
                 </span>
               </div>
@@ -1200,7 +1225,7 @@ export const QuestionVomitMachine: React.FC = () => {
           <div className="flex gap-3">
             <button
               onClick={() => setUserInput('')}
-              className="flex-1 text-zinc-500 hover:text-zinc-300 text-xs font-mono py-3 flex items-center justify-center gap-2 transition-colors"
+              className="flex-1 text-cyan-400/60 hover:text-cyan-400 text-xs font-mono py-3 flex items-center justify-center gap-2 transition-colors bg-space-800/50 hover:bg-space-800/70 border border-space-700 rounded"
             >
               <span className="material-symbols-outlined text-sm">restart_alt</span>
               <span>清空重置</span>
@@ -1209,13 +1234,14 @@ export const QuestionVomitMachine: React.FC = () => {
             {remainingRerolls > 0 && !isEditingHistory && (
               <button
                 onClick={handleReroll}
-                className="flex-1 text-zinc-500 hover:text-yellow-400 text-xs font-mono py-3 flex items-center justify-center gap-2 transition-colors"
+                className="flex-1 text-cyan-400/60 hover:text-amber-400 text-xs font-mono py-3 flex items-center justify-center gap-2 transition-colors bg-space-800/50 hover:bg-space-800/70 border border-space-700 rounded"
               >
                 <span className="material-symbols-outlined text-sm">refresh</span>
                 <span>重新抽取 (剩余: {remainingRerolls})</span>
               </button>
             )}
           </div>
+        </div>
         </div>
 
         <SilentObserverModal
@@ -1256,79 +1282,89 @@ export const QuestionVomitMachine: React.FC = () => {
 
     return (
       <>
-      <div className="min-h-screen bg-zinc-100 p-6">
-        {/* 统一样式的返回按钮 */}
-        <button onClick={() => setView('intro')} className="self-start text-zinc-400 mb-6 flex items-center gap-1 text-sm hover:text-zinc-800 transition-colors">
-          <ArrowLeft size={14} /> 返回观测站
-        </button>
+      <div className="min-h-screen space-bg p-6 relative">
+        {/* 纸理纹理叠加 */}
+        <div className="absolute inset-0 paper-texture pointer-events-none"></div>
 
-        <h1 className="text-2xl font-black mb-6 tracking-tight">人类思想样本库</h1>
+        {/* 返回按钮和标题 */}
+        <div className="relative z-10 max-w-2xl mx-auto mb-6">
+          <button onClick={() => setView('intro')} className="self-start text-cyan-400/70 hover:text-cyan-400 mb-6 flex items-center gap-1 text-sm transition-colors">
+            <ArrowLeft size={14} /> 返回观测站
+          </button>
+          <h1 className="text-2xl font-black mb-6 tracking-tight text-amber-100 glow-text">人类思想样本库</h1>
+        </div>
 
-        {isEmpty ? (
-          <div className="text-center py-12">
-            <p className="text-zinc-400 font-mono text-sm">数据库为空，暂无样本</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {archives.map((archive, index) => (
-              <div
-                key={index}
-                onClick={() => openHistoryEntry(archive)}
-                className="group relative bg-white border border-zinc-200 rounded-lg p-4 shadow-sm hover:shadow-md hover:border-yellow-400 transition-all cursor-pointer"
-              >
-                {/* 删除按钮 - 悬停时显示 */}
-                <button
-                  onClick={(e) => confirmDelete(archive, e)}
-                  className="absolute top-3 right-3 text-zinc-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-1 hover:bg-red-50 rounded"
-                  title="删除此记录"
+        {/* 档案列表 */}
+        <div className="relative z-10 max-w-2xl mx-auto">
+          {isEmpty ? (
+            <div className="text-center py-12">
+              <p className="text-cyan-400/60 font-mono text-sm hologram inline-block px-6 py-3 bg-space-850/50 rounded-lg">
+                数据库为空，暂无样本
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {archives.map((archive, index) => (
+                <div
+                  key={index}
+                  onClick={() => openHistoryEntry(archive)}
+                  className="group relative bg-space-850/80 backdrop-blur-sm border border-space-700 hover:border-amber-400/50 rounded-lg p-4 shadow-lg hover:shadow-xl hover:shadow-amber-400/10 transition-all cursor-pointer hologram depth-shadow"
                 >
-                  <Trash2 size={16} />
-                </button>
+                  {/* 删除按钮 - 悬停时显示 */}
+                  <button
+                    onClick={(e) => confirmDelete(archive, e)}
+                    className="absolute top-3 right-3 text-cyan-400/50 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all p-1 hover:bg-red-900/20 rounded"
+                    title="删除此记录"
+                  >
+                    <Trash2 size={16} />
+                  </button>
 
-                <div className="flex justify-between items-start mb-2 pr-8">
-                  <p className="text-zinc-500 text-xs font-mono">
-                    {new Date(archive.lastModified).toLocaleDateString()}
-                  </p>
-                  <p className="text-zinc-400 text-xs font-mono">
-                    #{archive.question?.ticketNum || 'N/A'}
-                  </p>
+                  <div className="flex justify-between items-start mb-2 pr-8">
+                    <p className="text-cyan-400/70 text-xs font-mono">
+                      {new Date(archive.lastModified).toLocaleDateString()}
+                    </p>
+                    <p className="text-cyan-400/50 text-xs font-mono">
+                      #{archive.question?.ticketNum || 'N/A'}
+                    </p>
+                  </div>
+                  <h3 className="font-bold text-amber-100 mb-1 pr-8">{archive.question?.text || '未知问题'}</h3>
+
+                  {/* 仅显示是否有答案，不显示内容 */}
+                  {archive.answers && archive.answers.length > 0 && (
+                    <p className="text-xs text-cyan-400/60 font-mono flex items-center gap-1">
+                      <span className="text-amber-400">✓</span> 已保存 {new Date(archive.answers[0].timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  )}
+                  {(!archive.answers || archive.answers.length === 0) && (
+                    <p className="text-xs text-cyan-400/40 italic">(无回答)</p>
+                  )}
                 </div>
-                <h3 className="font-bold text-zinc-800 mb-1 pr-8">{archive.question?.text || '未知问题'}</h3>
+              ))}
+            </div>
+          )}
+        </div>
 
-                {/* 仅显示是否有答案，不显示内容 */}
-                {archive.answers && archive.answers.length > 0 && (
-                  <p className="text-xs text-zinc-400 font-mono">
-                    ✓ 已保存 {new Date(archive.answers[0].timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                )}
-                {(!archive.answers || archive.answers.length === 0) && (
-                  <p className="text-xs text-zinc-400 italic">(无回答)</p>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
+        {/* 悬浮按钮 */}
         {!hasVomitedToday && (
           <button
             onClick={() => setView('intro')}
-            className="fixed bottom-6 right-6 w-14 h-14 bg-yellow-400 border-2 border-zinc-800 rounded-full shadow-lg flex items-center justify-center hover:brightness-110 transition-colors"
+            className="fixed bottom-6 right-6 w-14 h-14 bg-amber-400/90 hover:bg-amber-400 border-2 border-amber-500 rounded-full shadow-lg shadow-amber-400/30 flex items-center justify-center hover:brightness-110 transition-all btn-3d z-20"
           >
-            <span className="text-zinc-800 text-2xl font-black">+</span>
+            <span className="text-space-900 text-2xl font-black">+</span>
           </button>
         )}
-
-        {/* 删除确认弹窗 */}
-        <SilentObserverModal
-          isOpen={showDeleteModal}
-          onClose={() => {
-            setShowDeleteModal(false);
-            setArchiveToDelete(null);
-          }}
-          onConfirm={handleDeleteArchive}
-          message={`确定要删除这条记录吗？\n\n"${archiveToDelete?.question?.text || '未知问题'}"\n\n删除后无法恢复。`}
-        />
       </div>
+
+      {/* 弹窗 */}
+      <SilentObserverModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setArchiveToDelete(null);
+        }}
+        onConfirm={handleDeleteArchive}
+        message={`确定要删除这条记录吗？\n\n"${archiveToDelete?.question?.text || '未知问题'}"\n\n删除后无法恢复。`}
+      />
       <CheckInSuccessModal
         isOpen={showCheckInModal}
         onClose={() => setShowCheckInModal(false)}
