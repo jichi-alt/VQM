@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, X, Trash2, Activity, Trophy } from 'lucide-react';
-import { generatePhilosophicalQuestion, saveAnsweredQuestion, clearAnsweredQuestions } from '../services/geminiService';
+import { generatePhilosophicalQuestion, saveAnsweredQuestion, clearAnsweredQuestions, getAnsweredQuestions } from '../services/geminiService';
 import { QuestionData } from '../types';
 import { MemoryFragment, getRandomFragment, MEMORY_FRAGMENTS } from '../services/memoryFragments';
+import { PrologueScene } from './PrologueScene';
 
 interface SilentObserverModalProps {
   isOpen: boolean;
@@ -63,11 +64,12 @@ const SilentObserverModal = ({ isOpen, onClose, onConfirm, message }: SilentObse
 interface CheckInSuccessModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onUnlock: () => void;  // 新增：解锁记忆碎片的回调
   day: number;
   isCompleted: boolean;
 }
 
-const CheckInSuccessModal = ({ isOpen, onClose, day, isCompleted }: CheckInSuccessModalProps) => {
+const CheckInSuccessModal = ({ isOpen, onClose, onUnlock, day, isCompleted }: CheckInSuccessModalProps) => {
   if (!isOpen) return null;
 
   return (
@@ -131,12 +133,69 @@ const CheckInSuccessModal = ({ isOpen, onClose, day, isCompleted }: CheckInSucce
           <button
             onClick={() => {
               onClose();
+              onUnlock();  // 触发解锁记忆碎片
             }}
             className="w-full bg-space-800 hover:bg-space-700 text-amber-100 border border-amber-400/30 font-bold py-3 px-4 hover:border-amber-400/50 transition-all flex items-center justify-center gap-2 btn-3d"
           >
-            <span>现在开始真正的思考吧！</span>
+            <span>继续</span>
             <span className="text-amber-400">→</span>
           </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ==================== 解锁记忆碎片弹窗 ====================
+interface UnlockMemoryModalProps {
+  isOpen: boolean;
+  onConfirm: () => void;
+}
+
+const UnlockMemoryModal = ({ isOpen, onConfirm }: UnlockMemoryModalProps) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-500">
+      <div className="w-[340px] bg-space-850/90 backdrop-blur-md border-2 border-amber-400 shadow-[6px_6px_0px_0px_rgba(251,191,36,0.4)] animate-in zoom-in-95 duration-500 flex flex-col overflow-hidden hologram relative">
+
+        {/* 顶部装饰条 */}
+        <div className="bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 h-2 animate-pulse"></div>
+
+        {/* 主要内容 */}
+        <div className="px-6 py-8 text-center">
+          {/* 锁图标动画 */}
+          <div className="flex justify-center mb-6">
+            <div className="w-20 h-20 bg-space-800 rounded-full flex items-center justify-center border-2 border-amber-400/50 relative animate-bounce" style={{ animationDuration: '2s' }}>
+              <span className="material-symbols-outlined text-4xl text-amber-400">lock</span>
+              {/* 光环效果 */}
+              <div className="absolute inset-0 rounded-full border border-amber-400/30 animate-ping"></div>
+            </div>
+          </div>
+
+          {/* 核心文案 */}
+          <p className="text-lg font-black text-amber-100 mb-3 leading-relaxed glow-text">
+            记忆碎片正在恢复...
+          </p>
+          <p className="text-sm text-cyan-400/80 mb-8 leading-relaxed">
+            你在思考时产生的能量<br />正在解锁机器人的一段记忆
+          </p>
+
+          {/* 解锁按钮 */}
+          <button
+            onClick={onConfirm}
+            className="w-full bg-amber-400 hover:bg-amber-300 text-space-900 border-2 border-amber-500 font-bold py-3 px-4 transition-all flex items-center justify-center gap-2 btn-3d shadow-lg shadow-amber-400/30"
+          >
+            <span className="material-symbols-outlined">lock_open</span>
+            <span className="text-sm uppercase tracking-wider">解锁记忆碎片</span>
+          </button>
+        </div>
+
+        {/* 底部装饰 */}
+        <div className="bg-black/30 px-4 py-2 border-t border-white/10">
+          <p className="text-[10px] text-amber-400/60 font-mono text-center">
+            ● MEMORY FRAGMENT RECOVERY ●
+          </p>
         </div>
       </div>
     </div>
@@ -156,17 +215,17 @@ const MemoryFragmentModal = ({ isOpen, onClose, content, chapter, currentDay }: 
   if (!isOpen) return null;
 
   // 章节颜色
-  const chapterColors: Record<number | 'final', { bg: string; border: string; text: string; glow: string }> = {
-    1: { bg: 'bg-space-800/90', border: 'border-space-600', text: 'text-zinc-300', glow: 'shadow-zinc-500/20' },
-    2: { bg: 'bg-blue-900/80', border: 'border-cyan-500/50', text: 'text-cyan-100', glow: 'shadow-cyan-500/30' },
-    3: { bg: 'bg-purple-900/80', border: 'border-purple-500/50', text: 'text-purple-100', glow: 'shadow-purple-500/30' },
-    final: { bg: 'bg-amber-900/80', border: 'border-amber-400', text: 'text-amber-100', glow: 'shadow-amber-500/50' }
+  const chapterColors: Record<number | 'final', { bg: string; border: string; text: string; glow: string; title: string }> = {
+    1: { bg: 'bg-space-800/90', border: 'border-space-600', text: 'text-zinc-300', glow: 'shadow-zinc-500/20', title: '记忆碎片' },
+    2: { bg: 'bg-blue-900/80', border: 'border-cyan-500/50', text: 'text-cyan-100', glow: 'shadow-cyan-500/30', title: '记忆碎片' },
+    3: { bg: 'bg-purple-900/80', border: 'border-purple-500/50', text: 'text-purple-100', glow: 'shadow-purple-500/30', title: '记忆碎片' },
+    final: { bg: 'bg-amber-900/80', border: 'border-amber-400', text: 'text-amber-100', glow: 'shadow-amber-500/50', title: '记忆解锁' }
   };
 
   const colors = chapterColors[chapter] || chapterColors[1];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-300 scanlines perspective-1000">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-500 scanlines perspective-1000">
       <div className={`w-[360px] ${colors.bg} border-2 ${colors.border} ${colors.glow} shadow-2xl flex flex-col overflow-hidden hologram relative flip-in`} style={{ transformStyle: 'preserve-3d' }}>
 
         {/* 扫描线动画 */}
@@ -175,7 +234,8 @@ const MemoryFragmentModal = ({ isOpen, onClose, content, chapter, currentDay }: 
         {/* 顶部：章节标签 + 关闭 */}
         <div className="flex justify-between items-center px-4 py-3 border-b border-white/10 relative z-10">
           <div className="flex items-center gap-2">
-            <span className={`text-xs font-mono ${colors.text} opacity-70`}>● 记忆碎片</span>
+            <span className="material-symbols-outlined text-amber-400 text-sm">lock_open</span>
+            <span className={`text-xs font-mono ${colors.text} opacity-70`}>● {colors.title}</span>
             <span className={`text-xs font-bold ${colors.text} ${chapter === 'final' ? 'glow-text' : ''}`}>
               第{chapter === 'final' ? '终' : chapter}章
             </span>
@@ -226,8 +286,14 @@ const MemoryFragmentModal = ({ isOpen, onClose, content, chapter, currentDay }: 
 };
 
 export const QuestionVomitMachine: React.FC = () => {
-  const [view, setView] = useState<'intro' | 'daily' | 'history'>('intro');
+  // 初始化时检查是否看过前言
+  const hasSeenPrologue = localStorage.getItem('qvm_seen_prologue') === 'true';
+  const [view, setView] = useState<'intro' | 'daily' | 'history' | 'prologue'>(hasSeenPrologue ? 'intro' : 'prologue');
   const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(null);
+
+  // 调试：打印初始状态
+  console.log('QuestionVomitMachine 渲染，当前 view:', view);
+  console.log('是否看过前言:', hasSeenPrologue);
   const [isVomiting, setIsVomiting] = useState(false);
   const [hasVomitedToday, setHasVomitedToday] = useState(false);
   const [remainingRerolls, setRemainingRerolls] = useState(1);
@@ -261,7 +327,31 @@ export const QuestionVomitMachine: React.FC = () => {
   const [currentMemoryFragment, setCurrentMemoryFragment] = useState<MemoryFragment | null>(null);
   const [viewedFragmentIds, setViewedFragmentIds] = useState<string[]>([]);
 
+  // 解锁记忆碎片弹窗状态
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
+
+  // 机器人是否已离开（21天完成 + 所有问题抽完）
+  const [robotHasLeft, setRobotHasLeft] = useState(false);
+
   // ==================== 工具函数 ====================
+
+  // 预设问题总数（来自 geminiService.ts）
+  const TOTAL_FALLBACK_QUESTIONS = 47; // 12 + 14 + 14 + 7
+
+  // 检查是否所有预设问题都被抽取过了
+  const checkAllQuestionsAnswered = (): boolean => {
+    const answeredQuestions = getAnsweredQuestions();
+    // 如果已回答问题数 >= 总预设问题数，认为已经抽完
+    // 注意：这里只统计预设问题，AI生成的不计入
+    return answeredQuestions.length >= TOTAL_FALLBACK_QUESTIONS;
+  };
+
+  // 更新机器人离开状态
+  const updateRobotLeftStatus = () => {
+    const isCompleted = streakData.isCompleted;
+    const allAnswered = checkAllQuestionsAnswered();
+    setRobotHasLeft(isCompleted && allAnswered);
+  };
 
   // 获取今日日期 (YYYY-MM-DD 格式)
   const getTodayDate = (): string => {
@@ -562,6 +652,9 @@ export const QuestionVomitMachine: React.FC = () => {
     } catch (error) {
       console.error('Failed to load viewed fragments:', error);
     }
+
+    // 检查机器人是否已离开
+    updateRobotLeftStatus();
   }, []);
 
   // 保存今日状态到 localStorage
@@ -583,17 +676,18 @@ export const QuestionVomitMachine: React.FC = () => {
     localStorage.setItem('qvm_viewed_fragments', JSON.stringify(newViewed));
   };
 
-  // 触发记忆碎片的函数
-  const tryTriggerMemoryFragment = (probability: number) => {
+  // 触发记忆碎片的函数 - 仅在保存答案后调用
+  const tryTriggerMemoryFragment = () => {
     const currentDay = streakData.currentStreak;
+    console.log('🧩 尝试触发记忆碎片', { currentDay, viewedIds: viewedFragmentIds });
 
     // 21天必触发最终结局
     if (currentDay >= 21) {
       const finalFragment = MEMORY_FRAGMENTS.find(f => f.id === 'final');
       if (finalFragment && !viewedFragmentIds.includes('final')) {
+        console.log('✨ 触发最终结局');
         setCurrentMemoryFragment(finalFragment);
-        setShowMemoryModal(true);
-        saveViewedFragment('final');
+        setShowUnlockModal(true);  // 显示解锁弹窗
         return;
       }
     }
@@ -603,22 +697,41 @@ export const QuestionVomitMachine: React.FC = () => {
       f => f.isMilestone && f.minDay === currentDay && !viewedFragmentIds.includes(f.id)
     );
     if (milestoneFragment) {
+      console.log('✨ 触发里程碑碎片', milestoneFragment.id);
       setCurrentMemoryFragment(milestoneFragment);
-      setShowMemoryModal(true);
-      saveViewedFragment(milestoneFragment.id);
+      setShowUnlockModal(true);  // 显示解锁弹窗
       return;
     }
 
-    // 随机触发
-    if (Math.random() < probability) {
-      const fragment = getRandomFragment(currentDay, viewedFragmentIds);
-      if (fragment) {
-        setCurrentMemoryFragment(fragment);
-        setShowMemoryModal(true);
-        saveViewedFragment(fragment.id);
-      }
+    // 随机触发一个当前章节的碎片
+    const fragment = getRandomFragment(currentDay, viewedFragmentIds);
+    if (fragment) {
+      console.log('✨ 触发随机碎片', fragment.id);
+      setCurrentMemoryFragment(fragment);
+      setShowUnlockModal(true);  // 显示解锁弹窗
+    } else {
+      console.log('⚠️ 没有可用的碎片');
     }
   };
+
+  // 确认解锁记忆碎片
+  const handleUnlockMemory = () => {
+    setShowUnlockModal(false);
+    if (currentMemoryFragment) {
+      saveViewedFragment(currentMemoryFragment.id);
+      setShowMemoryModal(true);
+    }
+  };
+
+  // ==================== 前言逻辑 ====================
+
+  // 标记已看过前言
+  const markPrologueSeen = () => {
+    localStorage.setItem('qvm_seen_prologue', 'true');
+  };
+
+  // 初始化：检查是否看过前言（已移到 useState 初始化）
+  // 注意：不再需要单独的 useEffect，已在主 useEffect 中处理
 
   const handleSpitQuestion = async () => {
     setIsVomiting(true);
@@ -637,9 +750,6 @@ export const QuestionVomitMachine: React.FC = () => {
     setIsEditingHistory(false);
     saveTodayState(questionData, 1);
     setView('daily');
-
-    // 延迟触发记忆碎片（30%）
-    setTimeout(() => tryTriggerMemoryFragment(0.3), 500);
   };
 
   // 保存答案（覆盖模式）
@@ -687,17 +797,21 @@ export const QuestionVomitMachine: React.FC = () => {
 
       console.log('保存成功！');
 
+      // 更新机器人离开状态
+      updateRobotLeftStatus();
+
       // ==================== Phase 2: 集成打卡逻辑 ====================
       // 只有在非编辑历史记录模式且是新记录或首次保存时才打卡
       if (!isEditingHistory) {
-        checkIn(); // 执行打卡
+        const checkInResult = checkIn(); // 执行打卡，并返回结果
+        // 如果打卡成功且有新的记忆碎片，准备显示（但不在此时直接弹出）
+        if (checkInResult) {
+          console.log('打卡成功，准备解锁记忆碎片');
+        }
       }
 
       // 保存成功后跳转到历史页
       setView('history');
-
-      // 延迟触发记忆碎片（50%）
-      setTimeout(() => tryTriggerMemoryFragment(0.5), 300);
     } catch (error) {
       console.error('保存失败:', error);
       alert('保存失败，请重试');
@@ -795,11 +909,32 @@ export const QuestionVomitMachine: React.FC = () => {
     localStorage.removeItem('vqm_today');
   };
 
+  // ==================== PROLOGUE VIEW (前言动画) ====================
+  if (view === 'prologue') {
+    return (
+      <PrologueScene
+        onComplete={() => {
+          markPrologueSeen();
+          setView('intro');
+        }}
+        onSkip={() => {
+          markPrologueSeen();
+          setView('intro');
+        }}
+      />
+    );
+  }
+
   // ==================== INTRO VIEW ====================
   if (view === 'intro') {
+    console.log('渲染 INTRO VIEW');
     return (
       <>
       <div className="min-h-screen space-bg flex flex-col font-display relative">
+        {/* 调试信息 */}
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-yellow-500 text-black p-4 z-50">
+          当前在 INTRO VIEW
+        </div>
         {/* 纸理纹理叠加 */}
         <div className="absolute inset-0 paper-texture pointer-events-none"></div>
 
@@ -817,7 +952,7 @@ export const QuestionVomitMachine: React.FC = () => {
                     : <Activity size={14} className="text-amber-400/80" />
                   }
                   <span className="text-sm font-bold font-mono tracking-tight text-amber-100">
-                    {streakData.isCompleted ? "思想觉醒" : streakData.currentStreak === 0 ? "准备开始" : "思考中..."}
+                    {streakData.isCompleted ? "思想觉醒" : streakData.currentStreak === 0 ? "准备开始" : "请保持思想呕吐"}
                   </span>
                 </div>
               </div>
@@ -869,47 +1004,77 @@ export const QuestionVomitMachine: React.FC = () => {
           {/* Robot Face - 破旧机器人 + 3D浮动 */}
           <div className="flex flex-col items-center mb-8 perspective-1000">
             <h3 className="text-amber-400 font-black text-2xl mb-6 tracking-widest uppercase glow-text">问题呕吐机</h3>
-            <div className={`mb-8 relative ${isVomiting ? 'animate-shake' : 'float-3d'}`}>
-              {/* 机器人外壳 - 添加破损效果 */}
-              <div className="w-48 h-48 bg-space-800 rounded-2xl flex items-center justify-center robot-damaged relative border-2 border-rust-500/30 shadow-2xl depth-shadow">
-                {/* 锈迹装饰 */}
-                <div className="absolute top-4 right-4 w-8 h-1 bg-rust-400/40 rotate-45"></div>
-                <div className="absolute bottom-6 left-6 w-6 h-1 bg-rust-400/30 -rotate-12"></div>
 
-                {/* 机器人脸 */}
-                <div className="w-40 h-32 bg-space-850 rounded-xl flex flex-col items-center justify-center border border-space-700 relative overflow-hidden layered">
-                  {/* 扫描线效果 */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-400/5 to-transparent animate-scanline"></div>
-
-                  <div className="flex gap-6 mb-2 relative z-10">
-                    {/* 左眼 - 完整 */}
-                    <div className="w-8 h-8 bg-amber-400 rounded-full flex items-center justify-center shadow-lg shadow-amber-400/50">
-                      <div className="w-2 h-2 bg-space-900 animate-pulse"></div>
-                    </div>
-                    {/* 右眼 - 损坏（闪烁） */}
-                    <div className="w-8 h-8 bg-amber-400/70 rounded-full flex items-center justify-center shadow-lg shadow-amber-400/30 relative">
-                      <div className="w-2 h-2 bg-space-900/70 animate-pulse" style={{ animationDuration: '0.5s' }}></div>
-                      {/* 损坏痕迹 */}
-                      <div className="absolute top-0 right-0 w-3 h-0.5 bg-rust-400 rotate-45"></div>
-                    </div>
+            {robotHasLeft ? (
+              // ========== 机器人已离开 ==========
+              <div className="mb-8 relative">
+                {/* 空的位置 - 只留下轮廓 */}
+                <div className="w-48 h-48 bg-space-900/30 rounded-2xl flex items-center justify-center relative border-2 border-dashed border-space-600 shadow-2xl">
+                  {/* 留下的文字 */}
+                  <div className="text-center p-6">
+                    <span className="material-symbols-outlined text-4xl text-amber-400/50 block mb-3">rocket_launch</span>
+                    <p className="text-sm text-cyan-400/60 font-mono leading-relaxed">
+                      机器人已经回到了他的星球<br />
+                      <span className="text-xs text-amber-400/80 mt-2 block">
+                        他留下的所有问题<br />
+                        都已被你抽取完毕
+                      </span>
+                    </p>
                   </div>
-                  <div className={`bg-space-700 mt-2 transition-all ${isVomiting ? 'h-12 w-20' : 'h-1 w-16'} rounded-full`}></div>
                 </div>
               </div>
-            </div>
+            ) : (
+              // ========== 机器人还在 ==========
+              <div className={`mb-8 relative ${isVomiting ? 'animate-shake' : 'float-3d'}`}>
+                {/* 机器人外壳 - 添加破损效果 */}
+                <div className="w-48 h-48 bg-space-800 rounded-2xl flex items-center justify-center robot-damaged relative border-2 border-rust-500/30 shadow-2xl depth-shadow">
+                  {/* 锈迹装饰 */}
+                  <div className="absolute top-4 right-4 w-8 h-1 bg-rust-400/40 rotate-45"></div>
+                  <div className="absolute bottom-6 left-6 w-6 h-1 bg-rust-400/30 -rotate-12"></div>
+
+                  {/* 机器人脸 */}
+                  <div className="w-40 h-32 bg-space-850 rounded-xl flex flex-col items-center justify-center border border-space-700 relative overflow-hidden layered">
+                    {/* 扫描线效果 */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-400/5 to-transparent animate-scanline"></div>
+
+                    <div className="flex gap-6 mb-2 relative z-10">
+                      {/* 左眼 - 完整 */}
+                      <div className="w-8 h-8 bg-amber-400 rounded-full flex items-center justify-center shadow-lg shadow-amber-400/50">
+                        <div className="w-2 h-2 bg-space-900 animate-pulse"></div>
+                      </div>
+                      {/* 右眼 - 损坏（闪烁） */}
+                      <div className="w-8 h-8 bg-amber-400/70 rounded-full flex items-center justify-center shadow-lg shadow-amber-400/30 relative">
+                        <div className="w-2 h-2 bg-space-900/70 animate-pulse" style={{ animationDuration: '0.5s' }}></div>
+                        {/* 损坏痕迹 */}
+                        <div className="absolute top-0 right-0 w-3 h-0.5 bg-rust-400 rotate-45"></div>
+                      </div>
+                    </div>
+                    <div className={`bg-space-700 mt-2 transition-all ${isVomiting ? 'h-12 w-20' : 'h-1 w-16'} rounded-full`}></div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 状态显示 - 全息卡片风格 */}
           <div className="w-full border border-dashed border-cyan-400/30 bg-space-850/50 backdrop-blur-sm p-3 mb-8 text-center hologram">
             <p className="font-mono text-xs text-cyan-400/90 font-bold">
-              STATUS: <span className={isVomiting ? "text-amber-400 animate-pulse glow-text" : "text-amber-400/80"}>
-                {isVomiting ? "正在生成..." : hasVomitedToday ? "今日已抽题" : "等待输入..."}
+              状态: <span className={isVomiting ? "text-amber-400 animate-pulse glow-text" : "text-amber-400/80"}>
+                {robotHasLeft ? "机器人已离开" : isVomiting ? "正在生成..." : hasVomitedToday ? "今日已呕吐" : "今日未呕吐"}
               </span>
             </p>
           </div>
 
           {/* 核心逻辑：根据 hasVomitedToday 显示不同按钮 */}
-          {!hasVomitedToday ? (
+          {robotHasLeft ? (
+            // ========== 机器人已离开 ==========
+            <div className="w-full h-16 bg-space-800/50 border-2 border-space-600 rounded-lg flex items-center justify-center gap-3 opacity-60">
+              <span className="material-symbols-outlined text-cyan-400/50 text-2xl">lock</span>
+              <span className="text-space-400 text-lg font-bold tracking-wider uppercase">
+                机器人已离开
+              </span>
+            </div>
+          ) : !hasVomitedToday ? (
             // ========== 未抽题：显示大按钮 - 3D按压效果 ==========
             <button
               onClick={handleSpitQuestion}
@@ -1025,6 +1190,19 @@ export const QuestionVomitMachine: React.FC = () => {
                       }}
                       className="px-2 py-1 bg-amber-400/90 border border-amber-500 hover:bg-amber-400 text-space-900 rounded font-bold"
                     >第21天(通关)</button>
+                    <button
+                      onClick={() => {
+                        // 模拟所有问题都被抽取了
+                        const dummyQuestions = Array(47).fill('dummy');
+                        localStorage.setItem('qvm_answered_questions', JSON.stringify(dummyQuestions));
+                        const newData = { ...streakData, currentStreak: 21, lastCheckIn: getTodayDate(), isCompleted: true };
+                        saveStreakData(newData);
+                        setStreakData(newData);
+                        updateRobotLeftStatus();
+                        alert('已设置：机器人已离开状态\n（21天完成 + 所有问题抽完）');
+                      }}
+                      className="px-2 py-1 bg-red-900/50 hover:bg-red-900/70 border border-red-700/50 text-red-300 rounded font-bold"
+                    >🚀 机器人已离开</button>
                   </div>
                 </div>
 
@@ -1090,6 +1268,13 @@ export const QuestionVomitMachine: React.FC = () => {
                   <div className="flex gap-2 flex-wrap">
                     <button
                       onClick={() => {
+                        localStorage.removeItem('qvm_seen_prologue');
+                        setView('prologue');
+                      }}
+                      className="px-2 py-1 bg-purple-900/50 hover:bg-purple-900/70 border border-purple-700/50 text-purple-200 rounded font-bold"
+                    >🎬 重播前言</button>
+                    <button
+                      onClick={() => {
                         setViewedFragmentIds([]);
                         localStorage.removeItem('qvm_viewed_fragments');
                         alert('已清除碎片记录，可以重新观看');
@@ -1144,8 +1329,13 @@ export const QuestionVomitMachine: React.FC = () => {
       <CheckInSuccessModal
         isOpen={showCheckInModal}
         onClose={() => setShowCheckInModal(false)}
+        onUnlock={tryTriggerMemoryFragment}
         day={checkInDay}
         isCompleted={checkInDay >= 21}
+      />
+      <UnlockMemoryModal
+        isOpen={showUnlockModal}
+        onConfirm={handleUnlockMemory}
       />
       <MemoryFragmentModal
         isOpen={showMemoryModal}
@@ -1193,6 +1383,18 @@ export const QuestionVomitMachine: React.FC = () => {
           <label className="block text-cyan-400/70 text-xs font-mono mb-2">
             INPUT BUFFER // WRITE ACCESS
           </label>
+
+          {/* 呕吐写作引导卡片 */}
+          <div className="mb-3 bg-amber-400/10 border border-amber-400/30 rounded-lg p-3 hologram">
+            <div className="flex items-start gap-2">
+              <span className="material-symbols-outlined text-amber-400 text-sm mt-0.5">tips_and_updates</span>
+              <div className="text-xs text-amber-100 leading-relaxed">
+                <p className="font-bold text-amber-400 mb-1">呕吐写作法</p>
+                <p className="opacity-90">想到什么写什么，不要过度编辑，让思想自由流动。</p>
+              </div>
+            </div>
+          </div>
+
           <textarea
             value={userInput}
             onChange={(e) => setUserInput(e.target.value)}
@@ -1200,7 +1402,10 @@ export const QuestionVomitMachine: React.FC = () => {
             placeholder="在这里捕捉你的意识火花..."
           />
           <div className="flex justify-between items-center mt-2 text-cyan-400/60 text-xs font-mono">
-            <span>LN: {userInput.split('\n').length}</span>
+            <div className="flex items-center gap-3">
+              <span>LN: {userInput.split('\n').length}</span>
+              <span className="text-amber-400/80">{userInput.length} 字</span>
+            </div>
             <span>COL: {userInput.length}</span>
           </div>
         </div>
@@ -1265,8 +1470,13 @@ export const QuestionVomitMachine: React.FC = () => {
       <CheckInSuccessModal
         isOpen={showCheckInModal}
         onClose={() => setShowCheckInModal(false)}
+        onUnlock={tryTriggerMemoryFragment}
         day={checkInDay}
         isCompleted={checkInDay >= 21}
+      />
+      <UnlockMemoryModal
+        isOpen={showUnlockModal}
+        onConfirm={handleUnlockMemory}
       />
       <MemoryFragmentModal
         isOpen={showMemoryModal}
@@ -1379,8 +1589,13 @@ export const QuestionVomitMachine: React.FC = () => {
       <CheckInSuccessModal
         isOpen={showCheckInModal}
         onClose={() => setShowCheckInModal(false)}
+        onUnlock={tryTriggerMemoryFragment}
         day={checkInDay}
         isCompleted={checkInDay >= 21}
+      />
+      <UnlockMemoryModal
+        isOpen={showUnlockModal}
+        onConfirm={handleUnlockMemory}
       />
       <MemoryFragmentModal
         isOpen={showMemoryModal}
