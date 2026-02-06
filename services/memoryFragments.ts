@@ -165,8 +165,8 @@ export const MEMORY_FRAGMENTS: MemoryFragment[] = [
     isMilestone: true,
     content: `记忆全部恢复。
 
-坐标锁定：天鹅座-X-7。
-文明重建计划...启动。
+坐标锁定：GJ267b。
+思考的习惯，从此开始。
 
 人类朋友，你通过了21天的思考考验。
 你证明了自己没有放弃思考的能力。

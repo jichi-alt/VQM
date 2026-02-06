@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, X, Trash2, Activity, Trophy } from 'lucide-react';
-import { generatePhilosophicalQuestion } from '../services/geminiService';
+import { generatePhilosophicalQuestion, saveAnsweredQuestion, clearAnsweredQuestions } from '../services/geminiService';
 import { QuestionData } from '../types';
 import { MemoryFragment, getRandomFragment, MEMORY_FRAGMENTS } from '../services/memoryFragments';
 
@@ -155,7 +155,7 @@ interface MemoryFragmentModalProps {
 const MemoryFragmentModal = ({ isOpen, onClose, content, chapter, currentDay }: MemoryFragmentModalProps) => {
   if (!isOpen) return null;
 
-  // 星际日记风格 - 章节颜色
+  // 章节颜色
   const chapterColors: Record<number | 'final', { bg: string; border: string; text: string; glow: string }> = {
     1: { bg: 'bg-space-800/90', border: 'border-space-600', text: 'text-zinc-300', glow: 'shadow-zinc-500/20' },
     2: { bg: 'bg-blue-900/80', border: 'border-cyan-500/50', text: 'text-cyan-100', glow: 'shadow-cyan-500/30' },
@@ -624,7 +624,7 @@ export const QuestionVomitMachine: React.FC = () => {
     setIsVomiting(true);
 
     const [questionData] = await Promise.all([
-      generatePhilosophicalQuestion(),
+      generatePhilosophicalQuestion(streakData.currentStreak || 1),
       new Promise<void>((resolve) => setTimeout(resolve, 1500))
     ]);
 
@@ -680,6 +680,11 @@ export const QuestionVomitMachine: React.FC = () => {
       setIsDbEmpty(false);
       setLastSavedTime(formatTime(newAnswer.timestamp));
 
+      // 记录已回答的问题
+      if (currentQuestion?.text) {
+        saveAnsweredQuestion(currentQuestion.text);
+      }
+
       console.log('保存成功！');
 
       // ==================== Phase 2: 集成打卡逻辑 ====================
@@ -704,7 +709,7 @@ export const QuestionVomitMachine: React.FC = () => {
 
     setIsVomiting(true);
     const [questionData] = await Promise.all([
-      generatePhilosophicalQuestion(),
+      generatePhilosophicalQuestion(streakData.currentStreak || 1),
       new Promise<void>((resolve) => setTimeout(resolve, 1500))
     ]);
     setIsVomiting(false);
@@ -798,16 +803,13 @@ export const QuestionVomitMachine: React.FC = () => {
         {/* 纸理纹理叠加 */}
         <div className="absolute inset-0 paper-texture pointer-events-none"></div>
 
-        {/* --- 顶部：Protocol-21 进度条 --- */}
+        {/* --- 顶部：21天进度条 --- */}
         <div className="w-full bg-space-900/80 backdrop-blur-sm border-b border-space-700 py-3 px-6 shadow-lg relative z-10">
           <div className="max-w-md mx-auto">
 
             {/* 头部信息 */}
             <div className="flex justify-between items-end mb-3 border-b border-space-700 pb-2">
               <div className="flex flex-col">
-                <span className="text-[10px] text-cyan-400/70 font-mono tracking-widest uppercase mb-0.5">
-                  PROTOCOL-21
-                </span>
                 <div className="flex items-center gap-1.5 text-amber-400">
                   {/* 图标：未完成显示 Activity，完成显示 Trophy */}
                   {streakData.isCompleted
@@ -815,7 +817,7 @@ export const QuestionVomitMachine: React.FC = () => {
                     : <Activity size={14} className="text-amber-400/80" />
                   }
                   <span className="text-sm font-bold font-mono tracking-tight text-amber-100">
-                    {streakData.isCompleted ? "文明重建" : streakData.currentStreak === 0 ? "准备开始" : "觉醒中..."}
+                    {streakData.isCompleted ? "思想觉醒" : streakData.currentStreak === 0 ? "准备开始" : "思考中..."}
                   </span>
                 </div>
               </div>
@@ -835,7 +837,7 @@ export const QuestionVomitMachine: React.FC = () => {
               {[...Array(21)].map((_, i) => {
                 const isActive = i < streakData.currentStreak;
 
-                // 样式逻辑 - 星际日记风格
+                // 样式逻辑
                 let bgClass = "bg-space-700/50"; // 默认/未来 (暗色)
 
                 if (isActive) {
@@ -857,7 +859,7 @@ export const QuestionVomitMachine: React.FC = () => {
             {/* 底部微文案 */}
             <div className="flex justify-between items-center text-[10px] text-cyan-400/60 font-mono">
               <span>记忆恢复: {streakData.isCompleted ? "100%" : `${Math.round((streakData.currentStreak/21)*100)}%`}</span>
-              <span className="text-amber-400/80">文明重建进度</span>
+              <span className="text-amber-400/80">思考进度</span>
             </div>
           </div>
         </div>
@@ -866,7 +868,7 @@ export const QuestionVomitMachine: React.FC = () => {
           <div className="w-full max-w-md">
           {/* Robot Face - 破旧机器人 + 3D浮动 */}
           <div className="flex flex-col items-center mb-8 perspective-1000">
-            <h3 className="text-amber-400 font-black text-2xl mb-6 tracking-widest uppercase glow-text">星际日记</h3>
+            <h3 className="text-amber-400 font-black text-2xl mb-6 tracking-widest uppercase glow-text">问题呕吐机</h3>
             <div className={`mb-8 relative ${isVomiting ? 'animate-shake' : 'float-3d'}`}>
               {/* 机器人外壳 - 添加破损效果 */}
               <div className="w-48 h-48 bg-space-800 rounded-2xl flex items-center justify-center robot-damaged relative border-2 border-rust-500/30 shadow-2xl depth-shadow">
@@ -944,7 +946,7 @@ export const QuestionVomitMachine: React.FC = () => {
 
                     setIsVomiting(true);
                     const [questionData] = await Promise.all([
-                      generatePhilosophicalQuestion(),
+                      generatePhilosophicalQuestion(streakData.currentStreak || 1),
                       new Promise<void>((resolve) => setTimeout(resolve, 1500))
                     ]);
                     setIsVomiting(false);
@@ -1096,11 +1098,20 @@ export const QuestionVomitMachine: React.FC = () => {
                     >清除碎片记录</button>
                     <button
                       onClick={() => {
+                        clearAnsweredQuestions();
+                        alert('已清除问题记录，可以重新回答');
+                        window.location.reload();
+                      }}
+                      className="px-2 py-1 bg-space-700/50 hover:bg-space-700 border border-space-600 text-cyan-400/80 rounded"
+                    >清除问题记录</button>
+                    <button
+                      onClick={() => {
                         if (confirm('确定要重置所有数据吗？包括打卡进度和碎片记录')) {
                           localStorage.removeItem('qvm_streak');
                           localStorage.removeItem('qvm_viewed_fragments');
                           localStorage.removeItem('vqm_archives');
                           localStorage.removeItem('vqm_today');
+                          clearAnsweredQuestions();
                           window.location.reload();
                         }
                       }}
@@ -1111,7 +1122,7 @@ export const QuestionVomitMachine: React.FC = () => {
 
                 <div className="mt-2 pt-2 border-t border-amber-400/20">
                   <p className="font-mono text-amber-400/70">
-                    当前状态: Day {streakData.currentStreak} | 已看碎片: {viewedFragmentIds.length}
+                    当前状态: Day {streakData.currentStreak} | 已看碎片: {viewedFragmentIds.length} | 已答问题: {(() => { try { const a = JSON.parse(localStorage.getItem('qvm_answered_questions') || '[]'); return a.length; } catch { return 0; } })()}
                   </p>
                 </div>
               </div>
