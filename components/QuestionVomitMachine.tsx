@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, X, Trash2, Activity, Trophy } from 'lucide-react';
+import { ArrowLeft, X, Trash2, Activity, Trophy, LogIn, LogOut } from 'lucide-react';
 import { generatePhilosophicalQuestion, saveAnsweredQuestion, clearAnsweredQuestions, getAnsweredQuestions } from '../services/geminiService';
 import { QuestionData } from '../types';
 import { MemoryFragment, getRandomFragment, MEMORY_FRAGMENTS } from '../services/memoryFragments';
 import { PrologueScene } from './PrologueScene';
-import { playSound } from '../services/audioService';
+import { playSound, switchBGM, type BGMType } from '../services/audioService';
+import { AudioControl } from './AudioControl';
+import { getAuthService, type UserProfile } from '../services/authService';
+import { AuthModal } from './AuthModal';
 
 interface SilentObserverModalProps {
   isOpen: boolean;
@@ -336,6 +339,87 @@ const UnlockMemoryModal = ({ isOpen, onConfirm }: UnlockMemoryModalProps) => {
   );
 };
 
+// ==================== 登录提醒弹窗 ====================
+interface LoginPromptModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onLogin: () => void;
+}
+
+const LoginPromptModal = ({ isOpen, onClose, onLogin }: LoginPromptModalProps) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="w-[380px] bg-space-850/95 backdrop-blur-md border-2 border-amber-400/50 shadow-2xl hologram relative overflow-hidden">
+        {/* 顶部装饰条 */}
+        <div className="bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 h-1"></div>
+
+        {/* 关闭按钮 */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center bg-amber-400/20 hover:bg-amber-400/40 border border-2 border-amber-400/50 rounded-full transition-all z-10"
+          title="关闭"
+        >
+          <X size={16} className="text-amber-400" />
+        </button>
+
+        <div className="p-8">
+          {/* 图标 */}
+          <div className="flex justify-center mb-6">
+            <div className="w-16 h-16 bg-amber-400/20 rounded-full flex items-center justify-center border-2 border-amber-400/50">
+              <LogIn size={32} className="text-amber-400" />
+            </div>
+          </div>
+
+          {/* 标题 */}
+          <h2 className="text-xl font-black mb-3 text-center text-amber-100 glow-text">
+            保存到云端
+          </h2>
+
+          {/* 说明文案 */}
+          <div className="text-center mb-6 space-y-2">
+            <p className="text-sm text-cyan-400/90">
+              登录后将自动保存到云端，跨设备同步
+            </p>
+            <p className="text-xs text-space-700">
+              （未登录数据仅保存在本地浏览器）
+            </p>
+          </div>
+
+          {/* 按钮组 */}
+          <div className="space-y-3">
+            <button
+              onClick={onLogin}
+              className="w-full bg-amber-400 hover:bg-amber-300 text-space-900 border-2 border-amber-500 font-bold py-3 px-4 transition-all flex items-center justify-center gap-2 btn-3d btn-glow shadow-lg shadow-amber-400/30"
+            >
+              <LogIn size={18} />
+              <span>立即登录</span>
+            </button>
+
+            <button
+              onClick={onClose}
+              className="w-full bg-space-800 hover:bg-space-700 text-cyan-400/80 border border-cyan-400/30 font-semibold py-3 px-4 transition-all flex items-center justify-center gap-2"
+            >
+              <span>稍后再说</span>
+            </button>
+          </div>
+
+          {/* 底部提示 */}
+          <div className="mt-6 text-center">
+            <p className="text-[10px] text-space-700 font-mono">
+              已有账号？点击右上角登录按钮
+            </p>
+          </div>
+        </div>
+
+        {/* 底部装饰条 */}
+        <div className="bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 h-1"></div>
+      </div>
+    </div>
+  );
+};
+
 // ==================== 记忆碎片弹窗 ====================
 interface MemoryFragmentModalProps {
   isOpen: boolean;
@@ -428,10 +512,68 @@ export const QuestionVomitMachine: React.FC = () => {
   const hasSeenPrologue = localStorage.getItem('qvm_seen_prologue') === 'true';
   const [view, setView] = useState<'intro' | 'daily' | 'history' | 'prologue'>(hasSeenPrologue ? 'intro' : 'prologue');
   const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(null);
+  const [audioInitialized, setAudioInitialized] = useState(false);
+
+  // 认证相关状态
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [pendingLoginPrompt, setPendingLoginPrompt] = useState(false); // 待显示的登录提醒
 
   // 调试：打印初始状态
   console.log('QuestionVomitMachine 渲染，当前 view:', view);
   console.log('是否看过前言:', hasSeenPrologue);
+
+  // 监听全局用户交互来初始化音频
+  useEffect(() => {
+    if (audioInitialized) return;
+
+    const handleUserInteraction = () => {
+      if (!audioInitialized) {
+        console.log('[App] 用户首次交互，初始化音频系统');
+        // 播放一个静默的音效来初始化 AudioContext
+        playSound('button-click');
+        setAudioInitialized(true);
+      }
+    };
+
+    // 监听多种用户交互事件
+    const events = ['click', 'keydown', 'touchstart'];
+    events.forEach(event => {
+      document.addEventListener(event, handleUserInteraction, { once: true });
+    });
+
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, handleUserInteraction);
+      });
+    };
+  }, [audioInitialized]);
+
+  // 初始化认证服务
+  useEffect(() => {
+    const initAuth = async () => {
+      const authService = getAuthService();
+      const user = await authService.initialize();
+      if (user) {
+        setCurrentUser(user);
+        console.log('[App] 用户已登录:', user.email);
+      }
+    };
+    initAuth();
+
+    // 监听认证状态变化
+    const authService = getAuthService();
+    const unsubscribe = authService.onAuthStateChange((user) => {
+      setCurrentUser(user);
+      console.log('[App] 认证状态变化:', user?.email || '未登录');
+    });
+
+    return () => {
+      unsubscribe?.();
+    };
+  }, []);
+
   const [isVomiting, setIsVomiting] = useState(false);
   const [hasVomitedToday, setHasVomitedToday] = useState(false);
   const [remainingRerolls, setRemainingRerolls] = useState(1);
@@ -882,6 +1024,59 @@ export const QuestionVomitMachine: React.FC = () => {
   // 初始化：检查是否看过前言（已移到 useState 初始化）
   // 注意：不再需要单独的 useEffect，已在主 useEffect 中处理
 
+  // ==================== BGM 切换逻辑 ====================
+  // 根据 view 切换背景音乐
+  useEffect(() => {
+    const updateBGM = async () => {
+      let bgmType: BGMType = 'none';
+
+      switch (view) {
+        case 'prologue':
+          bgmType = 'none'; // 前言完全静音
+          break;
+        case 'intro':
+          bgmType = 'voice'; // 进入游戏界面使用 Background voice.m4a
+          break;
+        case 'daily':
+        case 'history':
+          bgmType = 'space'; // 写答案界面使用 space.mp3
+          break;
+      }
+
+      await switchBGM(bgmType, 1.5, 1); // 1.5秒淡入，1秒淡出
+    };
+
+    updateBGM();
+  }, [view]); // 监听 view 变化
+
+  // 认证相关处理函数
+  const handleLogin = () => {
+    setShowAuthModal(true);
+  };
+
+  const handleLogout = async () => {
+    const authService = getAuthService();
+    await authService.signOut();
+    setCurrentUser(null);
+    playSound('button-click');
+  };
+
+  const handleAuthSuccess = () => {
+    // 认证成功后刷新页面状态
+    window.location.reload();
+  };
+
+  // 处理记忆碎片弹窗关闭
+  const handleMemoryModalClose = () => {
+    setShowMemoryModal(false);
+    // 如果有待显示的登录提醒，现在显示
+    if (pendingLoginPrompt) {
+      console.log('记忆碎片关闭，显示登录提醒');
+      setShowLoginPrompt(true);
+      setPendingLoginPrompt(false);
+    }
+  };
+
   const handleSpitQuestion = async () => {
     playSound('vomit'); // 播放呕吐音效（与机器人张嘴同步）
     setIsVomiting(true);
@@ -912,7 +1107,7 @@ export const QuestionVomitMachine: React.FC = () => {
   };
 
   // 保存答案（覆盖模式）
-  const handleArchive = () => {
+  const handleArchive = async () => {
     if (!currentQuestion) {
       console.error('No current question');
       return;
@@ -926,6 +1121,29 @@ export const QuestionVomitMachine: React.FC = () => {
     };
 
     try {
+      // 1. 如果已登录，先保存到云端
+      if (currentUser) {
+        console.log('用户已登录，保存到云端...');
+        const authService = getAuthService();
+        const result = await authService.saveAnswer(
+          currentQuestion.id,
+          currentQuestion.text,
+          userInput
+        );
+
+        if (!result.success) {
+          console.error('云端保存失败:', result.error);
+          // 云端保存失败不影响本地保存
+        } else {
+          console.log('云端保存成功！');
+        }
+      } else {
+        // 2. 如果未登录，标记需要在记忆碎片关闭后显示登录提醒
+        console.log('用户未登录，标记待显示登录提醒');
+        setPendingLoginPrompt(true);
+      }
+
+      // 3. 保存到本地（无论是否登录）
       const archives: ArchiveEntry[] = JSON.parse(localStorage.getItem('vqm_archives') || '[]');
       const existingIndex = archives.findIndex(a => a.question.id === currentQuestion.id);
 
@@ -954,7 +1172,7 @@ export const QuestionVomitMachine: React.FC = () => {
         saveAnsweredQuestion(currentQuestion.text);
       }
 
-      console.log('保存成功！');
+      console.log('本地保存成功！');
 
       // 更新机器人离开状态
       updateRobotLeftStatus();
@@ -1073,6 +1291,8 @@ export const QuestionVomitMachine: React.FC = () => {
   // ==================== PROLOGUE VIEW (前言动画) ====================
   if (view === 'prologue') {
     return (
+      <>
+      <AudioControl currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} />
       <PrologueScene
         onComplete={() => {
           markPrologueSeen();
@@ -1083,12 +1303,15 @@ export const QuestionVomitMachine: React.FC = () => {
           setView('intro');
         }}
       />
+      </>
     );
   }
 
   // ==================== 问题预览过渡弹窗 ====================
   if (showQuestionPreview && previewQuestion) {
     return (
+      <>
+      <AudioControl currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} />
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm">
         <div className="max-w-lg w-full mx-4 question-preview-enter">
           {/* 星际风格卡片 */}
@@ -1122,6 +1345,7 @@ export const QuestionVomitMachine: React.FC = () => {
           </div>
         </div>
       </div>
+      </>
     );
   }
 
@@ -1129,6 +1353,7 @@ export const QuestionVomitMachine: React.FC = () => {
   if (view === 'intro') {
     return (
       <>
+      <AudioControl currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} />
       <div className="min-h-screen space-bg flex flex-col font-display relative intro-enter">
         {/* 纸理纹理叠加 */}
         <div className="absolute inset-0 paper-texture pointer-events-none"></div>
@@ -1560,10 +1785,15 @@ export const QuestionVomitMachine: React.FC = () => {
       />
       <MemoryFragmentModal
         isOpen={showMemoryModal}
-        onClose={() => setShowMemoryModal(false)}
+        onClose={handleMemoryModalClose}
         content={currentMemoryFragment?.content || ''}
         chapter={currentMemoryFragment?.chapter || 1}
         currentDay={streakData.currentStreak}
+      />
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onAuthSuccess={handleAuthSuccess}
       />
       </>
     );
@@ -1573,6 +1803,7 @@ export const QuestionVomitMachine: React.FC = () => {
   if (view === 'daily' && currentQuestion) {
     return (
       <>
+      <AudioControl currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} />
       <div className="min-h-screen space-bg text-amber-100 p-6 relative daily-enter">
         {/* 纸理纹理叠加 */}
         <div className="absolute inset-0 paper-texture pointer-events-none"></div>
@@ -1705,10 +1936,15 @@ export const QuestionVomitMachine: React.FC = () => {
       />
       <MemoryFragmentModal
         isOpen={showMemoryModal}
-        onClose={() => setShowMemoryModal(false)}
+        onClose={handleMemoryModalClose}
         content={currentMemoryFragment?.content || ''}
         chapter={currentMemoryFragment?.chapter || 1}
         currentDay={streakData.currentStreak}
+      />
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onAuthSuccess={handleAuthSuccess}
       />
       </>
     );
@@ -1728,6 +1964,7 @@ export const QuestionVomitMachine: React.FC = () => {
 
     return (
       <>
+      <AudioControl currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} />
       <div className="min-h-screen space-bg p-6 relative history-enter">
         {/* 纸理纹理叠加 */}
         <div className="absolute inset-0 paper-texture pointer-events-none"></div>
@@ -1828,10 +2065,20 @@ export const QuestionVomitMachine: React.FC = () => {
       />
       <MemoryFragmentModal
         isOpen={showMemoryModal}
-        onClose={() => setShowMemoryModal(false)}
+        onClose={handleMemoryModalClose}
         content={currentMemoryFragment?.content || ''}
         chapter={currentMemoryFragment?.chapter || 1}
         currentDay={streakData.currentStreak}
+      />
+      <LoginPromptModal
+        isOpen={showLoginPrompt}
+        onClose={() => setShowLoginPrompt(false)}
+        onLogin={handleLogin}
+      />
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onAuthSuccess={handleAuthSuccess}
       />
       </>
     );
