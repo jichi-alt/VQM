@@ -1,8 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { gsap } from 'gsap';
+import { playSound } from '../services/audioService';
 
 interface PrologueSceneProps {
   onComplete: () => void;
   onSkip: () => void;
+}
+
+// 星星粒子类型
+interface Star {
+  id: number;
+  left: string;
+  top: string;
+  size: number;
+  opacity: number;
+  delay: number;
+  duration: number;
+  color: string;
 }
 
 export const PrologueScene: React.FC<PrologueSceneProps> = ({ onComplete, onSkip }) => {
@@ -10,6 +24,28 @@ export const PrologueScene: React.FC<PrologueSceneProps> = ({ onComplete, onSkip
   const [showText, setShowText] = useState(false);
   const [displayText, setDisplayText] = useState('');
   const [canContinue, setCanContinue] = useState(false);
+
+  // 机器人容器引用
+  const robotRef = useRef<HTMLDivElement>(null);
+
+  // 生成星空粒子
+  const [stars] = useState<Star[]>(() => {
+    const starColors = [
+      'rgba(255, 255, 255,',  // 白色
+      'rgba(254, 243, 199,',  // 淡黄色
+      'rgba(34, 211, 238,',   // 淡青色
+    ];
+    return Array.from({ length: 200 }, (_, i) => ({
+      id: i,
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`,
+      size: Math.random() * 2 + 1,  // 1-3px
+      opacity: Math.random() * 0.7 + 0.3,  // 0.3-1
+      delay: Math.random() * 3,  // 0-3s 延迟
+      duration: Math.random() * 2 + 2,  // 2-4s 周期
+      color: starColors[Math.floor(Math.random() * starColors.length)],
+    }));
+  });
 
   const PROLOGUE_TEXT = `我来自一个遥远的星球 GJ267b。
 那里的人们曾经像你们一样，拥有自由思考的能力。
@@ -34,6 +70,11 @@ export const PrologueScene: React.FC<PrologueSceneProps> = ({ onComplete, onSkip
     const timer = setInterval(() => {
       if (index < PROLOGUE_TEXT.length) {
         setDisplayText(PROLOGUE_TEXT.slice(0, index + 1));
+        // 每打一个字符播放打字音效（跳过空格和换行）
+        const char = PROLOGUE_TEXT[index];
+        if (char && char !== ' ' && char !== '\n') {
+          playSound('typing');
+        }
         index++;
       } else {
         clearInterval(timer);
@@ -42,18 +83,50 @@ export const PrologueScene: React.FC<PrologueSceneProps> = ({ onComplete, onSkip
     }, 50);
   };
 
-  // 3秒后显示机器人
+  // 3秒后显示机器人并执行飞入动画
   useEffect(() => {
     const timer1 = setTimeout(() => {
-      setShowRobot(true);
-      console.log('显示机器人');
+      playSound('robot-arrival'); // 播放机器人降临音效
+
+      // 立即设置初始状态（避免闪烁）
+      requestAnimationFrame(() => {
+        if (robotRef.current) {
+          // 设置可见
+          gsap.set(robotRef.current, { visibility: 'visible' });
+
+          // 从深处远处飞来（scale + blur，不用 y 轴位移）
+          gsap.fromTo(robotRef.current,
+            {
+              scale: 0.1,
+              opacity: 0,
+              filter: 'blur(15px)',
+            },
+            {
+              scale: 1,
+              opacity: 1,
+              filter: 'blur(0px)',
+              duration: 5,
+              ease: 'power2.out',
+              onComplete: () => {
+                // 飞入完成后，轻微浮动
+                gsap.to(robotRef.current, {
+                  y: -15,
+                  duration: 3,
+                  yoyo: true,
+                  repeat: -1,
+                  ease: 'sine.inOut',
+                });
+              }
+            }
+          );
+        }
+      });
     }, 3000);
 
     const timer2 = setTimeout(() => {
       setShowText(true);
       startTypewriter();
-      console.log('显示文字');
-    }, 5000);
+    }, 10000);
 
     return () => {
       clearTimeout(timer1);
@@ -70,22 +143,44 @@ export const PrologueScene: React.FC<PrologueSceneProps> = ({ onComplete, onSkip
       color: '#fff',
       zIndex: 9999
     }}>
-      {/* 调试信息 */}
-      <div style={{ position: 'absolute', top: '10px', left: '10px', color: 'yellow', zIndex: 10000 }}>
-        <p>PrologueScene 渲染中...</p>
-        <p>showRobot: {showRobot.toString()}</p>
-        <p>showText: {showText.toString()}</p>
+      {/* 星空背景 */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        overflow: 'hidden',
+        zIndex: 1
+      }}>
+        {stars.map((star) => (
+          <div
+            key={star.id}
+            style={{
+              position: 'absolute',
+              left: star.left,
+              top: star.top,
+              width: `${star.size}px`,
+              height: `${star.size}px`,
+              backgroundColor: `${star.color} ${star.opacity})`,
+              borderRadius: '50%',
+              willChange: 'opacity',
+              animation: `twinkle ${star.duration}s ease-in-out ${star.delay}s infinite`,
+            }}
+          />
+        ))}
       </div>
 
       {/* 机器人 */}
-      {showRobot && (
-        <div style={{
+      <div
+        ref={robotRef}
+        style={{
           position: 'absolute',
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          zIndex: 10
-        }}>
+          zIndex: 10,
+          opacity: 0,
+          visibility: 'hidden'
+        }}
+      >
           <div style={{
             width: '192px',
             height: '192px',
@@ -135,7 +230,6 @@ export const PrologueScene: React.FC<PrologueSceneProps> = ({ onComplete, onSkip
             </div>
           </div>
         </div>
-      )}
 
       {/* 前言文字 */}
       {showText && (
@@ -194,7 +288,10 @@ export const PrologueScene: React.FC<PrologueSceneProps> = ({ onComplete, onSkip
           zIndex: 30
         }}>
           <button
-            onClick={onComplete}
+            onClick={() => {
+              playSound('button-click');
+              onComplete();
+            }}
             style={{
               backgroundColor: '#fbbf24',
               color: '#111827',
@@ -214,7 +311,10 @@ export const PrologueScene: React.FC<PrologueSceneProps> = ({ onComplete, onSkip
 
       {/* 跳过按钮 */}
       <button
-        onClick={onSkip}
+        onClick={() => {
+          playSound('button-click');
+          onSkip();
+        }}
         style={{
           position: 'absolute',
           top: '24px',
@@ -231,6 +331,10 @@ export const PrologueScene: React.FC<PrologueSceneProps> = ({ onComplete, onSkip
 
       {/* CSS */}
       <style>{`
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.3; transform: scale(0.8); }
+          50% { opacity: 1; transform: scale(1.2); }
+        }
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.5; }

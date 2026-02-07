@@ -4,6 +4,7 @@ import { generatePhilosophicalQuestion, saveAnsweredQuestion, clearAnsweredQuest
 import { QuestionData } from '../types';
 import { MemoryFragment, getRandomFragment, MEMORY_FRAGMENTS } from '../services/memoryFragments';
 import { PrologueScene } from './PrologueScene';
+import { playSound } from '../services/audioService';
 
 interface SilentObserverModalProps {
   isOpen: boolean;
@@ -70,13 +71,113 @@ interface CheckInSuccessModalProps {
 }
 
 const CheckInSuccessModal = ({ isOpen, onClose, onUnlock, day, isCompleted }: CheckInSuccessModalProps) => {
+  const [showButton, setShowButton] = useState(false);
+  const [isMilestone, setIsMilestone] = useState(false);
+  const [exploding, setExploding] = useState(false);
+
+  // 判断是否是里程碑
+  useEffect(() => {
+    if (isOpen) {
+      const milestone = day === 7 || day === 14 || day === 21;
+      setIsMilestone(milestone);
+
+      // 里程碑触发爆炸效果
+      if (milestone) {
+        setTimeout(() => setExploding(true), 200);
+      }
+
+      // 延迟显示按钮
+      setTimeout(() => {
+        setShowButton(true);
+      }, 1500);
+    } else {
+      setShowButton(false);
+      setExploding(false);
+    }
+  }, [isOpen, day]);
+
   if (!isOpen) return null;
 
+  // 里程碑天数特殊文案
+  const getMilestoneText = () => {
+    if (day === 7) return "第一个周期完成！";
+    if (day === 14) return "一半的路程！";
+    if (day === 21) return "全部完成！";
+    return "太好了，人类！";
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="w-[320px] bg-space-850/90 backdrop-blur-md border-2 border-amber-400 shadow-[6px_6px_0px_0px_rgba(251,191,36,0.3)] animate-in zoom-in-95 duration-300 flex flex-col overflow-hidden hologram relative">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm animate-in fade-in duration-300 ${
+      exploding ? 'bg-amber-400/30' : 'bg-black/70'
+    } transition-colors duration-300`}>
+      {/* 超级夸张的粒子爆炸效果 */}
+      {isMilestone && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {/* 放射光芒 */}
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div
+              key={`ray-${i}`}
+              className="absolute left-1/2 top-1/2 w-1 h-40 bg-gradient-to-t from-amber-400 to-transparent opacity-60"
+              style={{
+                transform: `translateX(-50%) translateY(-50%) rotate(${i * 30}deg)`,
+                animation: `rayExpand 1s ease-out ${i * 0.05}s forwards`,
+                transformOrigin: 'center top',
+              }}
+            />
+          ))}
+
+          {/* 大量彩色粒子 */}
+          {Array.from({ length: 60 }).map((_, i) => {
+            const size = Math.random() * 8 + 4; // 4-12px
+            const angle = (i / 60) * 360;
+            const distance = Math.random() * 200 + 100;
+            const colors = ['#fbbf24', '#fde047', '#fb923c', '#22d3ee', '#a78bfa', '#f472b6'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+
+            return (
+              <div
+                key={i}
+                className="absolute rounded-full shadow-lg"
+                style={{
+                  width: `${size}px`,
+                  height: `${size}px`,
+                  left: '50%',
+                  top: '50%',
+                  marginLeft: `-${size/2}px`,
+                  marginTop: `-${size/2}px`,
+                  backgroundColor: color,
+                  animation: `particleExplode 1.5s ease-out ${Math.random() * 0.5}s forwards`,
+                  '--tx': `${Math.cos(angle * Math.PI / 180) * distance}px`,
+                  '--ty': `${Math.sin(angle * Math.PI / 180) * distance}px`,
+                  zIndex: 100,
+                } as React.CSSProperties}
+              />
+            );
+          })}
+
+          {/* 星星闪烁 */}
+          {Array.from({ length: 15 }).map((_, i) => (
+            <div
+              key={`star-${i}`}
+              className="absolute text-6xl"
+              style={{
+                left: `${20 + Math.random() * 60}%`,
+                top: `${20 + Math.random() * 60}%`,
+                animation: `starTwinkle 0.8s ease-in-out ${i * 0.1}s`,
+                opacity: 0,
+              }}
+            >
+              ⭐
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className={`w-[320px] bg-space-850/90 backdrop-blur-md border-2 shadow-[6px_6px_0px_0px_rgba(251,191,36,0.3)] animate-in zoom-in-95 duration-300 flex flex-col overflow-hidden hologram relative ${
+        isMilestone ? 'border-amber-300 scale-110' : 'border-amber-400'
+      }`}>
         {/* 顶部装饰条 */}
-        <div className="bg-amber-400/90 h-2"></div>
+        <div className={`h-2 ${isMilestone ? 'bg-gradient-to-r from-amber-300 via-amber-400 to-amber-300' : 'bg-amber-400/90'}`}></div>
 
         {/* 关闭按钮 */}
         <div className="flex justify-end px-3 py-2">
@@ -90,21 +191,34 @@ const CheckInSuccessModal = ({ isOpen, onClose, onUnlock, day, isCompleted }: Ch
           {/* 奖杯图标（完成态）或活动图标（进行中） */}
           <div className="flex justify-center mb-4">
             {isCompleted ? (
-              <div className="w-16 h-16 bg-amber-400 rounded-full flex items-center justify-center shadow-lg shadow-amber-400/50">
+              <div className="w-16 h-16 bg-amber-400 rounded-full flex items-center justify-center shadow-lg shadow-amber-400/50 animate-[badgeBounce_1s_ease-out]">
                 <Trophy size={32} className="text-space-900" />
               </div>
             ) : (
-              <div className="w-16 h-16 bg-space-800 rounded-full flex items-center justify-center border-2 border-amber-400/50">
-                <Activity size={32} className="text-amber-400" />
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg ${
+                isMilestone
+                  ? 'bg-gradient-to-br from-amber-300 to-amber-500 border-2 border-amber-300 shadow-amber-400/70'
+                  : 'bg-space-800 border-2 border-amber-400/50'
+              }`}>
+                <Activity size={32} className={isMilestone ? 'text-space-900' : 'text-amber-400'} />
               </div>
             )}
           </div>
 
+          {/* 里程碑徽章 */}
+          {isMilestone && (
+            <div className="mb-3 animate-[badgeSlideIn_0.5s_ease-out]">
+              <span className="inline-block bg-amber-400 text-space-900 text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                🏆 里程碑成就
+              </span>
+            </div>
+          )}
+
           {/* 核心文案 */}
-          <p className="text-lg font-black text-amber-100 mb-2 leading-relaxed">
-            太好了，人类！
+          <p className={`text-lg font-black mb-2 leading-relaxed ${isMilestone ? 'text-amber-300 scale-110' : 'text-amber-100'}`}>
+            {getMilestoneText()}
           </p>
-          <p className="text-xl font-black text-amber-400 mb-6 tracking-tight glow-text">
+          <p className={`mb-6 tracking-tight ${isMilestone ? 'text-2xl text-amber-300 glow-text scale-110' : 'text-xl text-amber-400'}`}>
             这是你主动思考的第 {day} 天
           </p>
 
@@ -112,14 +226,13 @@ const CheckInSuccessModal = ({ isOpen, onClose, onUnlock, day, isCompleted }: Ch
           <div className="flex gap-[1px] mb-6 h-2 justify-center progress-pipe">
             {[...Array(21)].map((_, i) => {
               const isActive = i < day;
+              const isToday = i === day - 1;
               return (
                 <div
                   key={i}
-                  className={`w-1.5 rounded-[1px] progress-segment ${
+                  className={`w-1.5 rounded-[1px] progress-segment transition-all duration-500 ${
                     isActive
-                      ? isCompleted
-                        ? 'bg-amber-400 progress-segment-active'
-                        : i === day - 1
+                      ? isCompleted || isToday
                         ? 'bg-amber-400 progress-segment-active animate-pulse'
                         : 'bg-amber-400/60'
                       : 'bg-space-700'
@@ -129,13 +242,16 @@ const CheckInSuccessModal = ({ isOpen, onClose, onUnlock, day, isCompleted }: Ch
             })}
           </div>
 
-          {/* 继续按钮 */}
+          {/* 继续按钮 - 延迟显示 */}
           <button
             onClick={() => {
               onClose();
               onUnlock();  // 触发解锁记忆碎片
             }}
-            className="w-full bg-space-800 hover:bg-space-700 text-amber-100 border border-amber-400/30 font-bold py-3 px-4 hover:border-amber-400/50 transition-all flex items-center justify-center gap-2 btn-3d"
+            className={`w-full bg-space-800 hover:bg-space-700 text-amber-100 border border-amber-400/30 font-bold py-3 px-4 hover:border-amber-400/50 transition-all flex items-center justify-center gap-2 btn-3d btn-glow relative ${
+              showButton ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }`}
+            style={{ transition: 'all 0.5s ease-out' }}
           >
             <span>继续</span>
             <span className="text-amber-400">→</span>
@@ -153,11 +269,25 @@ interface UnlockMemoryModalProps {
 }
 
 const UnlockMemoryModal = ({ isOpen, onConfirm }: UnlockMemoryModalProps) => {
+  const [isUnlocking, setIsUnlocking] = useState(false);
+
+  const handleUnlock = () => {
+    setIsUnlocking(true);
+    setTimeout(() => {
+      onConfirm();
+    }, 800); // 闪光动画持续时间
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-500">
-      <div className="w-[340px] bg-space-850/90 backdrop-blur-md border-2 border-amber-400 shadow-[6px_6px_0px_0px_rgba(251,191,36,0.4)] animate-in zoom-in-95 duration-500 flex flex-col overflow-hidden hologram relative">
+      {/* 全屏闪光效果 */}
+      {isUnlocking && (
+        <div className="absolute inset-0 bg-amber-400 animate-[flash_0.8s_ease-out_forwards] z-0"></div>
+      )}
+
+      <div className="w-[340px] bg-space-850/90 backdrop-blur-md border-2 border-amber-400 shadow-[6px_6px_0px_0px_rgba(251,191,36,0.4)] animate-in zoom-in-95 duration-500 flex flex-col overflow-hidden hologram relative z-10">
 
         {/* 顶部装饰条 */}
         <div className="bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 h-2 animate-pulse"></div>
@@ -166,29 +296,33 @@ const UnlockMemoryModal = ({ isOpen, onConfirm }: UnlockMemoryModalProps) => {
         <div className="px-6 py-8 text-center">
           {/* 锁图标动画 */}
           <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 bg-space-800 rounded-full flex items-center justify-center border-2 border-amber-400/50 relative animate-bounce" style={{ animationDuration: '2s' }}>
-              <span className="material-symbols-outlined text-4xl text-amber-400">lock</span>
+            <div className={`w-20 h-20 bg-space-800 rounded-full flex items-center justify-center border-2 border-amber-400/50 relative ${isUnlocking ? 'animate-[unlockPulse_0.8s_ease-out_forwards]' : 'animate-bounce'}`} style={{ animationDuration: isUnlocking ? '0.8s' : '2s' }}>
+              <span className={`material-symbols-outlined text-4xl ${isUnlocking ? 'text-amber-300 scale-150 transition-transform duration-300' : 'text-amber-400'}`}>
+                {isUnlocking ? 'lock_open' : 'lock'}
+              </span>
               {/* 光环效果 */}
-              <div className="absolute inset-0 rounded-full border border-amber-400/30 animate-ping"></div>
+              <div className={`absolute inset-0 rounded-full border border-amber-400/30 ${isUnlocking ? 'animate-[unlockRing_0.8s_ease-out_forwards]' : 'animate-ping'}`}></div>
             </div>
           </div>
 
           {/* 核心文案 */}
-          <p className="text-lg font-black text-amber-100 mb-3 leading-relaxed glow-text">
-            记忆碎片正在恢复...
+          <p className={`text-lg font-black mb-3 leading-relaxed ${isUnlocking ? 'text-amber-300 scale-110 transition-all duration-300' : 'text-amber-100 glow-text'}`}>
+            {isUnlocking ? '记忆已解锁！' : '记忆碎片正在恢复...'}
           </p>
           <p className="text-sm text-cyan-400/80 mb-8 leading-relaxed">
-            你在思考时产生的能量<br />正在解锁机器人的一段记忆
+            {isUnlocking ? '正在读取数据...' : '你在思考时产生的能量\n正在解锁机器人的一段记忆'}
           </p>
 
           {/* 解锁按钮 */}
-          <button
-            onClick={onConfirm}
-            className="w-full bg-amber-400 hover:bg-amber-300 text-space-900 border-2 border-amber-500 font-bold py-3 px-4 transition-all flex items-center justify-center gap-2 btn-3d shadow-lg shadow-amber-400/30"
-          >
-            <span className="material-symbols-outlined">lock_open</span>
-            <span className="text-sm uppercase tracking-wider">解锁记忆碎片</span>
-          </button>
+          {!isUnlocking && (
+            <button
+              onClick={handleUnlock}
+              className="w-full bg-amber-400 hover:bg-amber-300 text-space-900 border-2 border-amber-500 font-bold py-3 px-4 transition-all flex items-center justify-center gap-2 btn-3d btn-glow shadow-lg shadow-amber-400/30 relative"
+            >
+              <span className="material-symbols-outlined">lock_open</span>
+              <span className="text-sm uppercase tracking-wider">解锁记忆碎片</span>
+            </button>
+          )}
         </div>
 
         {/* 底部装饰 */}
@@ -227,6 +361,10 @@ const MemoryFragmentModal = ({ isOpen, onClose, content, chapter, currentDay }: 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-500 scanlines perspective-1000">
       <div className={`w-[360px] ${colors.bg} border-2 ${colors.border} ${colors.glow} shadow-2xl flex flex-col overflow-hidden hologram relative flip-in`} style={{ transformStyle: 'preserve-3d' }}>
+
+        {/* 动态光效边框 */}
+        <div className="absolute inset-0 border-2 border-amber-400/20 rounded-lg animate-[borderPulse_2s_ease-in-out_infinite] pointer-events-none"></div>
+        <div className="absolute inset-0 border border-cyan-400/20 rounded-lg animate-[borderPulse_2s_ease-in-out_infinite_0.5s] pointer-events-none"></div>
 
         {/* 扫描线动画 */}
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-amber-400/5 to-transparent animate-scanline"></div>
@@ -302,6 +440,10 @@ export const QuestionVomitMachine: React.FC = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
   const [isEditingHistory, setIsEditingHistory] = useState(false);
+
+  // 过渡动画状态
+  const [showQuestionPreview, setShowQuestionPreview] = useState(false);
+  const [previewQuestion, setPreviewQuestion] = useState<QuestionData | null>(null);
 
   // 删除相关状态
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -523,8 +665,14 @@ export const QuestionVomitMachine: React.FC = () => {
     console.log(`🎉 打卡成功！连续思考第 ${newStreak} 天`);
 
     // 完成21天提示
+    // 完成提示音效
     if (isCompleted && !streakData.isCompleted) {
       console.log('🏆 恭喜！完成21天思考挑战！');
+      playSound('milestone'); // 播放里程碑音效
+    } else if (newStreak === 7 || newStreak === 14) {
+      playSound('milestone'); // 播放里程碑音效
+    } else {
+      playSound('success'); // 播放普通成功音效
     }
 
     // 显示打卡成功弹窗
@@ -716,6 +864,7 @@ export const QuestionVomitMachine: React.FC = () => {
 
   // 确认解锁记忆碎片
   const handleUnlockMemory = () => {
+    playSound('unlock'); // 播放解锁音效
     setShowUnlockModal(false);
     if (currentMemoryFragment) {
       saveViewedFragment(currentMemoryFragment.id);
@@ -734,6 +883,7 @@ export const QuestionVomitMachine: React.FC = () => {
   // 注意：不再需要单独的 useEffect，已在主 useEffect 中处理
 
   const handleSpitQuestion = async () => {
+    playSound('vomit'); // 播放呕吐音效（与机器人张嘴同步）
     setIsVomiting(true);
 
     const [questionData] = await Promise.all([
@@ -742,14 +892,23 @@ export const QuestionVomitMachine: React.FC = () => {
     ]);
 
     setIsVomiting(false);
-    setCurrentQuestion(questionData);
-    setHasVomitedToday(true);
-    setRemainingRerolls(1);
-    setUserInput(''); // 新题清空输入
-    setLastSavedTime(null);
-    setIsEditingHistory(false);
-    saveTodayState(questionData, 1);
-    setView('daily');
+
+    // 显示问题预览过渡
+    setPreviewQuestion(questionData);
+    setShowQuestionPreview(true);
+
+    // 2秒后自动跳转到Daily页
+    setTimeout(() => {
+      setShowQuestionPreview(false);
+      setCurrentQuestion(questionData);
+      setHasVomitedToday(true);
+      setRemainingRerolls(1);
+      setUserInput('');
+      setLastSavedTime(null);
+      setIsEditingHistory(false);
+      saveTodayState(questionData, 1);
+      setView('daily');
+    }, 2000);
   };
 
   // 保存答案（覆盖模式）
@@ -804,9 +963,11 @@ export const QuestionVomitMachine: React.FC = () => {
       // 只有在非编辑历史记录模式且是新记录或首次保存时才打卡
       if (!isEditingHistory) {
         const checkInResult = checkIn(); // 执行打卡，并返回结果
-        // 如果打卡成功且有新的记忆碎片，准备显示（但不在此时直接弹出）
+        // 如果打卡成功，显示打卡成功弹窗（包含庆祝动画）
         if (checkInResult) {
-          console.log('打卡成功，准备解锁记忆碎片');
+          console.log('打卡成功，准备显示庆祝弹窗');
+          // 不跳转，让弹窗自然显示
+          return;
         }
       }
 
@@ -925,16 +1086,50 @@ export const QuestionVomitMachine: React.FC = () => {
     );
   }
 
+  // ==================== 问题预览过渡弹窗 ====================
+  if (showQuestionPreview && previewQuestion) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm">
+        <div className="max-w-lg w-full mx-4 question-preview-enter">
+          {/* 星际风格卡片 */}
+          <div className="bg-space-850 border-2 border-amber-400/50 rounded-lg p-8 shadow-2xl relative overflow-hidden">
+            {/* 全息扫描效果 */}
+            <div className="absolute inset-0 bg-gradient-to-b from-amber-400/10 to-transparent pointer-events-none"></div>
+
+            {/* 标签 */}
+            <div className="flex items-center gap-2 mb-4 relative z-10">
+              <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+              <span className="text-amber-400 text-sm font-mono tracking-wider">
+                问题已提取
+              </span>
+            </div>
+
+            {/* 问题文本 */}
+            <div className="text-amber-100 text-xl leading-relaxed mb-6 relative z-10">
+              {previewQuestion.text}
+            </div>
+
+            {/* 装饰元素 */}
+            <div className="flex justify-between items-center text-space-600 text-xs font-mono relative z-10">
+              <span>NO.{previewQuestion.ticketNum}</span>
+              <span>即将进入记录页面...</span>
+            </div>
+
+            {/* 进度条 */}
+            <div className="mt-4 h-1 bg-space-700 rounded-full overflow-hidden relative z-10">
+              <div className="h-full bg-amber-400 animate-[progress_2s_ease-out_forwards]"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ==================== INTRO VIEW ====================
   if (view === 'intro') {
-    console.log('渲染 INTRO VIEW');
     return (
       <>
-      <div className="min-h-screen space-bg flex flex-col font-display relative">
-        {/* 调试信息 */}
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-yellow-500 text-black p-4 z-50">
-          当前在 INTRO VIEW
-        </div>
+      <div className="min-h-screen space-bg flex flex-col font-display relative intro-enter">
         {/* 纸理纹理叠加 */}
         <div className="absolute inset-0 paper-texture pointer-events-none"></div>
 
@@ -1079,14 +1274,16 @@ export const QuestionVomitMachine: React.FC = () => {
             <button
               onClick={handleSpitQuestion}
               disabled={isVomiting}
-              className="w-full h-16 bg-amber-400/90 hover:bg-amber-400 border-2 border-amber-500 btn-3d flex items-center justify-center gap-3 disabled:grayscale disabled:opacity-50 hologram"
+              className={`w-full h-16 bg-amber-400/90 hover:bg-amber-400 border-2 border-amber-500 btn-3d btn-glow flex items-center justify-center gap-3 disabled:grayscale disabled:opacity-50 hologram relative ${isVomiting ? 'btn-loading' : ''}`}
             >
               <span className="text-space-900 text-xl font-black tracking-widest uppercase">
                 {isVomiting ? "CALCULATING..." : "吐一个问题"}
               </span>
-              <span className="bg-space-900 text-amber-400 p-1 rounded">
-                →
-              </span>
+              {!isVomiting && (
+                <span className="bg-space-900 text-amber-400 p-1 rounded">
+                  →
+                </span>
+              )}
             </button>
           ) : (
             // ========== 已抽题：显示查看今日样本按钮 ==========
@@ -1097,7 +1294,7 @@ export const QuestionVomitMachine: React.FC = () => {
                   setIsEditingHistory(false);
                   setView('daily');
                 }}
-                className="w-full h-14 bg-space-850/80 hover:bg-space-850 border border-cyan-400/30 text-amber-100 btn-3d flex items-center justify-center gap-2 hologram"
+                className="w-full h-14 bg-space-850/80 hover:bg-space-850 border border-cyan-400/30 text-amber-100 btn-3d btn-glow flex items-center justify-center gap-2 hologram relative"
               >
                 <span className="material-symbols-outlined text-cyan-400">today</span>
                 <span className="font-bold tracking-wide">查看今日样本</span>
@@ -1128,10 +1325,10 @@ export const QuestionVomitMachine: React.FC = () => {
                     setView('daily');
                   }}
                   disabled={isVomiting || remainingRerolls <= 0}
-                  className="w-full h-10 bg-space-700/50 hover:bg-space-700/70 border border-space-600 text-cyan-400/80 hover:text-cyan-400 btn-3d flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed hologram"
+                  className={`w-full h-10 bg-space-700/50 hover:bg-space-700/70 border border-space-600 text-cyan-400/80 hover:text-cyan-400 btn-3d btn-glow flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed hologram relative ${isVomiting ? 'btn-loading' : ''}`}
                 >
-                  <span className="material-symbols-outlined text-sm">refresh</span>
-                  <span>不满意？强制重置 (剩余: {remainingRerolls})</span>
+                  {!isVomiting && <span className="material-symbols-outlined text-sm">refresh</span>}
+                  <span>{isVomiting ? "重置中..." : `不满意？强制重置 (剩余: ${remainingRerolls})`}</span>
                 </button>
               )}
             </div>
@@ -1156,40 +1353,60 @@ export const QuestionVomitMachine: React.FC = () => {
 
                 {/* 设置打卡天数 */}
                 <div className="space-y-1 mb-3">
-                  <p className="font-mono text-cyan-400/80">设置打卡天数：</p>
+                  <p className="font-mono text-cyan-400/80">设置打卡天数（即将打卡状态）：</p>
                   <div className="flex gap-2 flex-wrap">
                     <button
                       onClick={() => {
-                        const newData = { ...streakData, currentStreak: 1, lastCheckIn: getTodayDate() };
+                        const yesterday = new Date();
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        const newData = { ...streakData, currentStreak: 0, lastCheckIn: yesterday.toISOString().split('T')[0], checkInHistory: [yesterday.toISOString().split('T')[0]] };
                         saveStreakData(newData);
                         setStreakData(newData);
                       }}
                       className="px-2 py-1 bg-space-700/50 hover:bg-space-700 border border-space-600 text-cyan-400 rounded"
-                    >第1天</button>
+                    >第0天→1天</button>
                     <button
                       onClick={() => {
-                        const newData = { ...streakData, currentStreak: 7, lastCheckIn: getTodayDate() };
+                        const yesterday = new Date();
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        const newData = { ...streakData, currentStreak: 6, lastCheckIn: yesterday.toISOString().split('T')[0], checkInHistory: Array(6).fill('').map((_, i) => {
+                          const d = new Date();
+                          d.setDate(d.getDate() - (6 - i));
+                          return d.toISOString().split('T')[0];
+                        }) };
                         saveStreakData(newData);
                         setStreakData(newData);
                       }}
                       className="px-2 py-1 bg-space-700/50 hover:bg-space-700 border border-space-600 text-cyan-400 rounded"
-                    >第7天(里程碑)</button>
+                    >第6天→7天(里程碑)</button>
                     <button
                       onClick={() => {
-                        const newData = { ...streakData, currentStreak: 14, lastCheckIn: getTodayDate() };
+                        const yesterday = new Date();
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        const newData = { ...streakData, currentStreak: 13, lastCheckIn: yesterday.toISOString().split('T')[0], checkInHistory: Array(13).fill('').map((_, i) => {
+                          const d = new Date();
+                          d.setDate(d.getDate() - (13 - i));
+                          return d.toISOString().split('T')[0];
+                        }) };
                         saveStreakData(newData);
                         setStreakData(newData);
                       }}
                       className="px-2 py-1 bg-space-700/50 hover:bg-space-700 border border-space-600 text-cyan-400 rounded"
-                    >第14天(里程碑)</button>
+                    >第13天→14天(里程碑)</button>
                     <button
                       onClick={() => {
-                        const newData = { ...streakData, currentStreak: 21, lastCheckIn: getTodayDate(), isCompleted: true };
+                        const yesterday = new Date();
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        const newData = { ...streakData, currentStreak: 20, lastCheckIn: yesterday.toISOString().split('T')[0], checkInHistory: Array(20).fill('').map((_, i) => {
+                          const d = new Date();
+                          d.setDate(d.getDate() - (20 - i));
+                          return d.toISOString().split('T')[0];
+                        }) };
                         saveStreakData(newData);
                         setStreakData(newData);
                       }}
                       className="px-2 py-1 bg-amber-400/90 border border-amber-500 hover:bg-amber-400 text-space-900 rounded font-bold"
-                    >第21天(通关)</button>
+                    >第20天→21天(通关)</button>
                     <button
                       onClick={() => {
                         // 模拟所有问题都被抽取了
@@ -1328,7 +1545,11 @@ export const QuestionVomitMachine: React.FC = () => {
       </div>
       <CheckInSuccessModal
         isOpen={showCheckInModal}
-        onClose={() => setShowCheckInModal(false)}
+        onClose={() => {
+          setShowCheckInModal(false);
+          // 打卡成功弹窗关闭后，自动跳转到历史页面
+          setTimeout(() => setView('history'), 300);
+        }}
         onUnlock={tryTriggerMemoryFragment}
         day={checkInDay}
         isCompleted={checkInDay >= 21}
@@ -1352,7 +1573,7 @@ export const QuestionVomitMachine: React.FC = () => {
   if (view === 'daily' && currentQuestion) {
     return (
       <>
-      <div className="min-h-screen space-bg text-amber-100 p-6 relative">
+      <div className="min-h-screen space-bg text-amber-100 p-6 relative daily-enter">
         {/* 纸理纹理叠加 */}
         <div className="absolute inset-0 paper-texture pointer-events-none"></div>
 
@@ -1422,7 +1643,7 @@ export const QuestionVomitMachine: React.FC = () => {
                   handleArchive();
                 }
               }}
-              className="w-full bg-amber-400/90 hover:bg-amber-400 border-2 border-amber-500 text-space-900 btn-3d py-4 px-6 flex items-center justify-center gap-3 hologram"
+              className="w-full bg-amber-400/90 hover:bg-amber-400 border-2 border-amber-500 text-space-900 btn-3d btn-glow py-4 px-6 flex items-center justify-center gap-3 hologram relative"
             >
               <span className="material-symbols-outlined">archive</span>
               <span className="font-bold tracking-wider text-sm uppercase">存入人类思想样本库</span>
@@ -1469,7 +1690,11 @@ export const QuestionVomitMachine: React.FC = () => {
       </div>
       <CheckInSuccessModal
         isOpen={showCheckInModal}
-        onClose={() => setShowCheckInModal(false)}
+        onClose={() => {
+          setShowCheckInModal(false);
+          // 打卡成功弹窗关闭后，自动跳转到历史页面
+          setTimeout(() => setView('history'), 300);
+        }}
         onUnlock={tryTriggerMemoryFragment}
         day={checkInDay}
         isCompleted={checkInDay >= 21}
@@ -1503,7 +1728,7 @@ export const QuestionVomitMachine: React.FC = () => {
 
     return (
       <>
-      <div className="min-h-screen space-bg p-6 relative">
+      <div className="min-h-screen space-bg p-6 relative history-enter">
         {/* 纸理纹理叠加 */}
         <div className="absolute inset-0 paper-texture pointer-events-none"></div>
 
@@ -1588,7 +1813,11 @@ export const QuestionVomitMachine: React.FC = () => {
       />
       <CheckInSuccessModal
         isOpen={showCheckInModal}
-        onClose={() => setShowCheckInModal(false)}
+        onClose={() => {
+          setShowCheckInModal(false);
+          // 打卡成功弹窗关闭后，自动跳转到历史页面
+          setTimeout(() => setView('history'), 300);
+        }}
         onUnlock={tryTriggerMemoryFragment}
         day={checkInDay}
         isCompleted={checkInDay >= 21}

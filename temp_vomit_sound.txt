@@ -1,0 +1,117 @@
+// 临时文件 - 用于替换 playVomitSound 方法
+// 将此方法复制到 audioService.ts 的 playVomitSound 方法中
+
+private playVomitSound() {
+  if (!this.audioContext || !this.masterGain) return;
+
+  const duration = 1.5;
+  const currentTime = this.audioContext.currentTime;
+  const metalFreq = 850; // 固定金属音高
+
+  // 创建大量随机碰撞声
+  for (let i = 0; i < 30; i++) {
+    const randomTime = Math.random() * duration;
+    const randomDuration = 0.02 + Math.random() * 0.08;
+
+    // 金属撞击音 - 方波
+    const osc1 = this.audioContext.createOscillator();
+    const gain1 = this.audioContext.createGain();
+    osc1.type = 'square';
+    osc1.connect(gain1);
+    gain1.connect(this.masterGain);
+
+    osc1.frequency.value = metalFreq;
+
+    gain1.gain.setValueAtTime(0.12, currentTime + randomTime);
+    gain1.gain.exponentialRampToValueAtTime(0.001, currentTime + randomTime + randomDuration);
+
+    osc1.start(currentTime + randomTime);
+    osc1.stop(currentTime + randomTime + randomDuration);
+
+    // 金属泛音 - 锯齿波（稍微失谐）
+    const osc2 = this.audioContext.createOscillator();
+    const gain2 = this.audioContext.createGain();
+    osc2.type = 'sawtooth';
+    osc2.connect(gain2);
+    gain2.connect(this.masterGain);
+
+    // 固定失谐频率，产生金属泛音
+    osc2.frequency.value = metalFreq * (1.4 + Math.random() * 0.3);
+
+    gain2.gain.setValueAtTime(0.06, currentTime + randomTime);
+    gain2.gain.exponentialRampToValueAtTime(0.001, currentTime + randomTime + randomDuration * 0.7);
+
+    osc2.start(currentTime + randomTime);
+    osc2.stop(currentTime + randomTime + randomDuration * 0.7);
+  }
+
+  // 添加大量金属噪声 - 破铜烂铁摩擦声
+  for (let i = 0; i < 15; i++) {
+    const randomTime = Math.random() * duration;
+    const noiseDuration = 0.05 + Math.random() * 0.15;
+
+    const bufferSize = this.audioContext.sampleRate * noiseDuration;
+    const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for (let j = 0; j < bufferSize; j++) {
+      // 产生粗糙的金属噪声
+      data[j] = (Math.random() * 2 - 1) * Math.exp(-j / (bufferSize * 0.2));
+    }
+
+    const noise = this.audioContext.createBufferSource();
+    noise.buffer = buffer;
+
+    // 不同的滤波器产生不同质感
+    const filterTypes = ['highpass', 'bandpass', 'lowpass'];
+    const filter = this.audioContext.createBiquadFilter();
+    filter.type = filterTypes[Math.floor(Math.random() * filterTypes.length)] as BiquadFilterType;
+    filter.frequency.value = 1000 + Math.random() * 3000;
+    filter.Q.value = 1 + Math.random() * 5;
+
+    const noiseGain = this.audioContext.createGain();
+    noise.connect(filter);
+    filter.connect(noiseGain);
+    noiseGain.connect(this.masterGain);
+
+    noiseGain.gain.setValueAtTime(0.04, currentTime + randomTime);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, currentTime + randomTime + noiseDuration);
+
+    noise.start(currentTime + randomTime);
+  }
+
+  // 底层持续金属轰鸣 - 固定频率
+  const drone = this.audioContext.createOscillator();
+  const droneGain = this.audioContext.createGain();
+  const droneFilter = this.audioContext.createBiquadFilter();
+
+  drone.type = 'sawtooth';
+  drone.connect(droneFilter);
+  droneFilter.connect(droneGain);
+  droneGain.connect(this.masterGain);
+
+  droneFilter.type = 'bandpass';
+  droneFilter.frequency.value = metalFreq; // 固定频率
+  droneFilter.Q.value = 10; // 高Q值产生共振峰
+
+  drone.frequency.value = metalFreq; // 固定频率
+
+  droneGain.gain.setValueAtTime(0.08, currentTime);
+  droneGain.gain.linearRampToValueAtTime(0.02, currentTime + duration);
+
+  drone.start(currentTime);
+  drone.stop(currentTime + duration);
+
+  // 添加 FM 调制产生金属失谐
+  const modulator = this.audioContext.createOscillator();
+  const modGain = this.audioContext.createGain();
+
+  modulator.frequency.value = metalFreq * 0.5; // 固定调制频率
+  modGain.gain.value = 100; // 调制深度
+
+  modulator.connect(modGain);
+  modGain.connect(drone.frequency);
+
+  modulator.start(currentTime);
+  modulator.stop(currentTime + duration);
+}

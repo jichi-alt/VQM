@@ -369,11 +369,73 @@
           0 8px 16px rgba(0, 0, 0, 0.3);
       }
 
+      .btn-3d:hover {
+        transform: translateY(-2px);
+        box-shadow:
+          0 6px 0 0 rgba(0, 0, 0, 0.3),
+          0 12px 20px rgba(0, 0, 0, 0.4);
+      }
+
       .btn-3d:active {
         transform: translateY(4px);
         box-shadow:
           0 0 0 0 rgba(0, 0, 0, 0.3),
           0 4px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      /* 按钮发光效果 */
+      .btn-glow {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn-glow::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(251, 191, 36, 0.3) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .btn-glow:hover::before {
+        opacity: 1;
+      }
+
+      /* 按钮加载状态 */
+      .btn-loading {
+        pointer-events: none;
+        opacity: 0.7;
+      }
+
+      .btn-loading::after {
+        content: '';
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border: 2px solid transparent;
+        border-top-color: currentColor;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      /* 按钮禁用状态增强 */
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+        transform: none !important;
+        box-shadow: none !important;
+      }
+
+      button:disabled:hover {
+        transform: none !important;
       }
 
       /* 3D进度管道 */
@@ -453,6 +515,168 @@
         transform:
           rotateY(10deg) rotateX(5deg)
           translateZ(30px) scale(1.05);
+      }
+
+      /* ==================== 页面过渡动画 ==================== */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes fadeOut {
+        from {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        to {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+      }
+
+      .page-enter {
+        animation: fadeIn 0.4s ease-out forwards;
+      }
+
+      /* 页面进入时的动画 */
+      .intro-enter { animation: fadeIn 0.5s ease-out forwards; }
+      .daily-enter { animation: fadeIn 0.4s ease-out forwards; }
+      .history-enter { animation: fadeIn 0.4s ease-out forwards; }
+
+      /* 进度条动画 */
+      @keyframes progress {
+        from { width: 0%; }
+        to { width: 100%; }
+      }
+
+      @keyframes progress2s {
+        from { width: 0%; }
+        to { width: 100%; }
+      }
+
+      /* 问题预览弹窗动画 */
+      @keyframes questionPreviewIn {
+        from {
+          opacity: 0;
+          transform: scale(0.8) translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+
+      .question-preview-enter {
+        animation: questionPreviewIn 0.5s ease-out forwards;
+      }
+
+      /* 记忆碎片解锁闪光动画 */
+      @keyframes flash {
+        0% { opacity: 0; }
+        10% { opacity: 0.8; }
+        100% { opacity: 0; }
+      }
+
+      /* 解锁时锁的脉冲动画 */
+      @keyframes unlockPulse {
+        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); }
+        50% { transform: scale(1.1); box-shadow: 0 0 0 20px rgba(251, 191, 36, 0); }
+        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+      }
+
+      /* 解锁时光环扩散动画 */
+      @keyframes unlockRing {
+        0% { transform: scale(1); opacity: 1; }
+        100% { transform: scale(2); opacity: 0; }
+      }
+
+      /* 边框脉冲动画 */
+      @keyframes borderPulse {
+        0%, 100% { opacity: 0.2; }
+        50% { opacity: 0.6; }
+      }
+
+      /* 粒子爆炸动画 */
+      @keyframes particle {
+        0% {
+          transform: rotate(var(--rotation, 0deg)) translateY(0) scale(1);
+          opacity: 1;
+        }
+        100% {
+          transform: rotate(var(--rotation, 0deg)) translateY(-120px) scale(0);
+          opacity: 0;
+        }
+      }
+
+      /* 超级粒子爆炸 - 使用自定义属性 */
+      @keyframes particleExplode {
+        0% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
+        }
+        100% {
+          transform: translate(calc(-50% + var(--tx, 0px)), calc(-50% + var(--ty, 0px))) scale(0);
+          opacity: 0;
+        }
+      }
+
+      /* 光芒放射 */
+      @keyframes rayExpand {
+        0% {
+          transform: translateX(-50%) translateY(-50%) rotate(var(--rotation, 0deg)) scaleY(0);
+          opacity: 0.8;
+        }
+        100% {
+          transform: translateX(-50%) translateY(-50%) rotate(var(--rotation, 0deg)) scaleY(3);
+          opacity: 0;
+        }
+      }
+
+      /* 星星闪烁 */
+      @keyframes starTwinkle {
+        0%, 100% {
+          opacity: 0;
+          transform: scale(0) rotate(0deg);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.5) rotate(180deg);
+        }
+      }
+
+      /* 徽章弹跳动画 */
+      @keyframes badgeBounce {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.2) rotate(5deg); }
+      }
+
+      /* 徽章滑入动画 */
+      @keyframes badgeSlideIn {
+        0% {
+          transform: translateY(-20px);
+          opacity: 0;
+        }
+        100% {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      /* 震动效果 */
+      .animate-shake {
+        animation: shake 0.5s ease-in-out;
+      }
+
+      @keyframes shake {
+        0%, 100% { transform: translateX(0) scale(1.1); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px) scale(1.1); }
+        20%, 40%, 60%, 80% { transform: translateX(5px) scale(1.1); }
       }
     </style>
   <script type="importmap">
