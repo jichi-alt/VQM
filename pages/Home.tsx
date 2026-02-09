@@ -51,7 +51,7 @@ export const Home: React.FC = () => {
 
           <div className="w-full max-w-[280px] border border-dashed border-border-dark/40 bg-white/50 p-2 mb-8 text-center backdrop-blur-sm">
             <p className="font-mono text-xs text-border-dark font-bold tracking-wide">
-              STATUS: <span className="text-emerald-700 animate-pulse">{isLoading ? "正在生成..." : "正在等待输入..."}</span>
+              STATUS: <span className="text-emerald-700 animate-pulse">{isLoading ? "正在生成..." : "今日未吐出"}</span>
             </p>
           </div>
 
