@@ -62,7 +62,7 @@ export const PrologueScene: React.FC<PrologueSceneProps> = ({ onComplete, onSkip
 
 你有 21 天。证明人类值得被拯救。`;
 
-  // 打字机效果
+  // 打字机效果（恢复音效）
   const startTypewriter = () => {
     let index = 0;
     setDisplayText('');
@@ -105,7 +105,7 @@ export const PrologueScene: React.FC<PrologueSceneProps> = ({ onComplete, onSkip
               scale: 1,
               opacity: 1,
               filter: 'blur(0px)',
-              duration: 5,
+              duration: 2, // 缩短飞入时间，避免和文字重叠
               ease: 'power2.out',
               onComplete: () => {
                 // 飞入完成后，轻微浮动
@@ -126,7 +126,7 @@ export const PrologueScene: React.FC<PrologueSceneProps> = ({ onComplete, onSkip
     const timer2 = setTimeout(() => {
       setShowText(true);
       startTypewriter();
-    }, 10000);
+    }, 7000); // 机器人飞入完成（5秒）+ 2秒停顿 = 7秒后开始打字，确保完全同步
 
     return () => {
       clearTimeout(timer1);

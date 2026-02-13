@@ -1,0 +1,12 @@
+# 星际日记 - robots.txt
+# 部署后请更新：将 Sitemap 中的域名替换为你的实际域名
+
+User-agent: *
+Allow: /
+
+# 禁止访问的目录（如果有）
+# Disallow: /api/
+# Disallow: /private/
+
+# 网站地图
+Sitemap: https://your-domain.com/sitemap.xml

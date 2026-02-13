@@ -1,0 +1,23 @@
+{
+  "name": "星际日记 - 21天思考挑战",
+  "short_name": "星际日记",
+  "description": "来自GJ267b星球的机器人，寻找还能思考的人类。通过21天的深度思考挑战，帮助你重建思维习惯。",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#fbbf24",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

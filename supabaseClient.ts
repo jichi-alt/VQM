@@ -1,7 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://msfifonrgyxlysngguyu.supabase.co';
-const supabaseAnonKey = 'sb_publishable_-4YZCuSJ715fSUH0XskVFw_xJ5SWxKo';
+// 从环境变量读取 Supabase 配置
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Missing Supabase environment variables. Please check your .env.local file.');
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
