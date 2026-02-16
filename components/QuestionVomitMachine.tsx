@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, X, Trash2, Activity, Trophy, LogIn, LogOut } from 'lucide-react';
-import { generatePhilosophicalQuestion, saveAnsweredQuestion, clearAnsweredQuestions, getAnsweredQuestions } from '../services/geminiService';
+import { generatePhilosophicalQuestion, saveAnsweredQuestion, clearAnsweredQuestions, getAnsweredQuestions } from '../services/questionService';
 import { QuestionData } from '../types';
 import { MemoryFragment, getRandomFragment, MEMORY_FRAGMENTS } from '../services/memoryFragments';
 import { PrologueScene } from './PrologueScene';

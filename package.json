@@ -16,7 +16,6 @@
   "dependencies": {
     "@fortawesome/free-solid-svg-icons": "^7.1.0",
     "@fortawesome/react-fontawesome": "^3.2.0",
-    "@google/genai": "^1.38.0",
     "@supabase/supabase-js": "^2.95.3",
     "@types/three": "^0.182.0",
     "gsap": "^3.14.2",

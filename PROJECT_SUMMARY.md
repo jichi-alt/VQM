@@ -1886,3 +1886,290 @@ npm install  # 确保依赖最新
 *上线准备清单创建时间: 2026-02-09*
 *下一步: 让Claude开始处理"紧急问题"部分的代码任务*
 *预计完成时间: 明天 2-3小时*
+
+---
+
+## 🆕 2026-02-16 更新 - 项目架构优化与Supabase集成
+
+### 本次更新概览
+
+本次更新完成了三项重大改进：
+1. **移除 Gemini API 依赖** - 使用预制问题库
+2. **Supabase 数据库完整集成** - 云端存储 + localStorage 双存储
+3. **代码架构优化** - 创建自定义 Hooks 简化状态管理
+
+---
+
+## 📝 完成的改进任务
+
+### ✅ 任务 1: 移除 Gemini API，改用预制问题
+
+**问题背景**:
+- 之前依赖 Google Gemini API 生成哲学问题
+- 需要 API 密钥，增加成本和复杂度
+- 网络请求可能失败
+
+**解决方案**:
+- 创建 `services/questionBank.ts` - 50+ 个预制哲学问题
+- 创建 `services/questionService.ts` - 使用预制问题的服务
+- 更新 `QuestionVomitMachine.tsx` 的 import
+- 移除 `@google/genai` 依赖
+- 更新 `.env.example` 移除 Gemini API 配置
+
+**问题库结构**:
+| 章节 | 天数 | 主题 | 问题数 |
+|------|------|------|--------|
+| 第1章 | 1-6天 | 起源 - 自我认知 | 12个 |
+| 第2章 | 7-13天 | 观察 - 理解人类 | 14个 |
+| 第3章 | 14-20天 | 希望 - 创造未来 | 14个 |
+| 第4章 | 21天 | 觉醒 - 反思总结 | 7个 |
+
+**新增文件**:
+- `/workspace/services/questionBank.ts` (192行)
+- `/workspace/services/questionService.ts` (106行)
+
+**修改文件**:
+- `/workspace/components/QuestionVomitMachine.tsx` - 更新 import
+- `/workspace/package.json` - 移除 `@google/genai`
+- `/workspace/.env.example` - 移除 Gemini 配置
+
+---
+
+### ✅ 任务 2: 数据存储从 localStorage 迁移到 Supabase
+
+**问题背景**:
+- 用户申请了 Supabase 免费额度数据库
+- 需要实现云端数据存储
+- 希望数据不丢失，支持跨设备同步
+
+**解决方案**:
+
+#### 2.1 数据库表结构
+创建 8 张数据表：
+
+| 表名 | 用途 | 关键字段 |
+|------|------|----------|
+| `profiles` | 用户资料 | id, email, username |
+| `user_streaks` | 打卡记录 | current_streak, last_check_in, check_in_history |
+| `user_answers` | 用户回答 | question_id, answer, created_at |
+| `question_bank` | 问题库 | id, text, chapter, day (50+预制问题) |
+| `answered_questions` | 已回答问题记录 | user_id, question_text |
+| `viewed_fragments` | 已查看记忆碎片 | user_id, fragment_id |
+| `user_preferences` | 用户偏好设置 | seen_prologue, audio_enabled |
+| `daily_states` | 每日状态 | date, question_id, answers, checked_in |
+
+#### 2.2 Row Level Security (RLS) 策略
+- ✅ 用户只能读写自己的数据
+- ✅ 认证用户可以读取问题库
+- ✅ 未认证用户无法访问敏感数据
+
+#### 2.3 存储架构
+```
+          用户操作
+             ↓
+    ┌────────────────┐
+    │  DataService   │ ← 统一数据访问层
+    └───────┬────────┘
+            │
+     ┌──────┴──────┐
+     │             │
+     ▼             ▼
+  localStorage   Supabase
+     │             │
+     └──────┬──────┘
+            │
+    双写 + Fallback策略
+```
+
+**存储策略**:
+- **读取**: 优先读 localStorage（快速），无数据则读 Supabase
+- **写入**: 同时保存到 localStorage 和 Supabase
+- **离线支持**: 无网络时使用 localStorage，有网络时自动同步
+
+**新增文件**:
+- `/workspace/supabase-setup.sql` - 初始数据库脚本（有问题，已弃用）
+- `/workspace/supabase-setup-fixed.sql` - 修复版脚本（有问题，已弃用）
+- `/workspace/supabase-clean-install.sql` - 完全重装版（✅ 成功）
+- `/workspace/clean-policies.sql` - 清理旧策略脚本
+- `/workspace/services/dataService.ts` (408行) - 统一数据访问层
+- `/workspace/SUPABASE_SETUP.md` - 详细设置指南
+
+**修改文件**:
+- `/workspace/supabaseClient.ts` - 已存在，保持不变
+
+#### 2.4 数据库设置执行过程
+
+遇到的问题及解决：
+1. **Trigger 重复** - 添加 `DROP TRIGGER IF EXISTS`
+2. **Policy 重复** - 添加 `DROP POLICY IF EXISTS`
+3. **auth.users trigger 重复** - 添加 `DROP TRIGGER IF EXISTS ON auth.users`
+
+最终成功的文件：`supabase-clean-install.sql`
+
+执行结果：
+```
+| ✅ 数据库设置完成！   |
+| table_name        | row_count |
+| profiles          | 0         |
+| question_bank     | 50        |
+| user_streaks      | 0         |
+| user_answers      | 0         |
+| answered_questions | 0        |
+| viewed_fragments  | 0         |
+| user_preferences  | 0         |
+| daily_states      | 0         |
+```
+
+---
+
+### ✅ 任务 3: 拆分 QuestionVomatMachine 大组件
+
+**问题背景**:
+- `QuestionVomitMachine.tsx` 文件过大（2088行）
+- 难以维护，测试困难，职责不清晰
+
+**解决方案**:
+
+#### 3.1 创建自定义 Hooks
+
+| Hook名 | 文件 | 职责 |
+|--------|------|------|
+| `useAuth` | `hooks/useAuth.ts` | 用户认证状态管理 |
+| `useStreak` | `hooks/useStreak.ts` | 打卡数据管理 |
+| `useDailyState` | `hooks/useDailyState.ts` | 每日状态管理 |
+
+#### 3.2 目录结构
+```
+components/QuestionVomitMachine/
+├── hooks/
+│   ├── useAuth.ts
+│   ├── useStreak.ts
+│   ├── useDailyState.ts
+│   └── index.ts
+```
+
+**新增文件**:
+- `/workspace/components/QuestionVomitMachine/hooks/useAuth.ts` (56行)
+- `/workspace/components/QuestionVomitMachine/hooks/useStreak.ts` (82行)
+- `/workspace/components/QuestionVomitMachine/hooks/useDailyState.ts` (81行)
+- `/workspace/components/QuestionVomitMachine/hooks/index.ts` (6行)
+
+**后续步骤** (待完成):
+- [ ] 提取 Modal 组件到独立文件
+- [ ] 提取子组件（QuestionCard, AnswerInput 等）
+- [ ] 进一步简化主组件
+
+**参考文档**:
+- `/workspace/REFACTOR_PLAN.md` - 详细的重构计划
+
+---
+
+## 📦 新增文件清单
+
+```
+/workspace/
+├── services/
+│   ├── questionBank.ts          # 预制问题库（50+问题）
+│   ├── questionService.ts       # 问题服务（替代 Gemini）
+│   └── dataService.ts           # 统一数据访问层
+│
+├── components/QuestionVomitMachine/
+│   └── hooks/
+│       ├── useAuth.ts           # 认证 Hook
+│       ├── useStreak.ts         # 打卡 Hook
+│       ├── useDailyState.ts     # 每日状态 Hook
+│       └── index.ts             # Hooks 入口
+│
+├── supabase-clean-install.sql   # 数据库设置脚本（✅ 成功）
+├── clean-policies.sql           # 清理旧策略脚本
+├── SUPABASE_SETUP.md            # Supabase 设置指南
+├── REFACTOR_PLAN.md             # 组件重构计划
+└── IMPROVEMENTS_SUMMARY.md      # 改进总结
+```
+
+---
+
+## 🚀 下一步操作
+
+### 必须完成：
+
+1. **配置环境变量**
+   ```bash
+   cp .env.example .env.local
+   # 编辑 .env.local，填入 Supabase 凭证
+   ```
+
+2. **安装依赖**
+   ```bash
+   npm install
+   ```
+
+3. **启动开发服务器**
+   ```bash
+   npm run dev
+   ```
+
+### 可选改进：
+
+- [ ] 完成组件拆分（参考 REFACTOR_PLAN.md）
+- [ ] 添加单元测试
+- [ ] 添加错误监控（Sentry）
+- [ ] 性能优化（代码分割、懒加载）
+
+---
+
+## 📋 Supabase 设置清单
+
+- [x] 1. 在 Supabase 创建项目
+- [x] 2. 执行 `supabase-clean-install.sql` 脚本
+- [ ] 3. 获取 `VITE_SUPABASE_URL` 和 `VITE_SUPABASE_ANON_KEY`
+- [ ] 4. 创建 `.env.local` 文件并配置
+- [ ] 5. 测试登录功能
+- [ ] 6. 验证数据同步
+
+---
+
+## ⚠️ 注意事项
+
+### 环境变量
+
+`.env.local` 应包含：
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key-here
+```
+
+### 数据迁移
+
+如果用户之前使用过 localStorage 版本，登录后会自动同步数据到 Supabase。
+
+### 问题库
+
+问题库已预制 50+ 个问题，无需 API 即可运行。
+
+---
+
+## 🎉 总结
+
+### 主要改进
+1. ✅ 移除 Gemini API 依赖，使用预制问题
+2. ✅ 实现 Supabase 云端存储 + localStorage 双存储
+3. ✅ 创建自定义 Hooks 简化状态管理
+4. ✅ 提供完整的数据库设置方案
+
+### 收益
+- 不再依赖 AI API，节省成本
+- 数据持久化到云端，不易丢失
+- 代码结构更清晰，易于维护
+- 离线可用性增强
+
+### 已完成文档
+- ✅ `IMPROVEMENTS_SUMMARY.md` - 改进总结
+- ✅ `SUPABASE_SETUP.md` - Supabase 设置指南
+- ✅ `REFACTOR_PLAN.md` - 组件重构计划
+
+---
+
+*更新时间: 2026-02-16*
+*状态: Supabase 数据库设置成功，等待环境配置*
+*下一步: 配置 .env.local 并测试功能*
