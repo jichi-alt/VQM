@@ -16,8 +16,8 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
 
     define: {
-      'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      // 移除 Gemini 相关配置（已使用预制问题）
+      // 'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
     },
 
     resolve: {
@@ -40,10 +40,6 @@ export default defineConfig(({ mode }) => {
             // Supabase 单独打包
             if (id.includes('node_modules/@supabase/')) {
               return 'supabase-vendor';
-            }
-            // Google AI 单独打包
-            if (id.includes('node_modules/@google/')) {
-              return 'google-vendor';
             }
             // GSAP 动画库单独打包
             if (id.includes('node_modules/gsap/')) {
@@ -87,7 +83,6 @@ export default defineConfig(({ mode }) => {
         'gsap',
         'lucide-react',
       ],
-      exclude: ['@google/genai'],
     },
 
     // 全局环境变量前缀
