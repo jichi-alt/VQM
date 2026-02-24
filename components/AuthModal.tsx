@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock, User } from 'lucide-react';
-import { signIn, signUp } from '../services/authService';
+import { signIn, signUp } from '../src/services/auth.service';
 
 interface AuthModalProps {
   isOpen: boolean;

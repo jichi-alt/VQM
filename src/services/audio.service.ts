@@ -106,7 +106,7 @@ class AudioService {
   }
 
   // 播放音效
-  play(type: SoundType) {
+  async play(type: SoundType) {
     if (!this.enabled) {
       console.log('[Audio] 音效已禁用，跳过播放:', type);
       return;
@@ -120,10 +120,11 @@ class AudioService {
         return;
       }
 
-      // 恢复 AudioContext（如果被挂起）
+      // 恢复 AudioContext（如果被挂起）- 必须等待完成
       if (this.audioContext.state === 'suspended') {
         console.log('[Audio] 恢复 AudioContext');
-        this.audioContext.resume();
+        await this.audioContext.resume();
+        console.log('[Audio] AudioContext 已恢复');
       }
 
       console.log('[Audio] 播放音效:', type);
@@ -1091,6 +1092,22 @@ export function getAudioService(): AudioService {
 // 便捷函数
 export function playSound(type: SoundType) {
   getAudioService().play(type);
+}
+
+// 强制初始化音频系统（用于自动播放场景）
+export async function initAudioSystem(): Promise<void> {
+  const service = getAudioService();
+  const ctx = service.getAudioContext();
+
+  if (ctx && ctx.state === 'suspended') {
+    console.log('[Audio] 强制恢复 AudioContext');
+    await ctx.resume();
+    console.log('[Audio] AudioContext 已恢复');
+  }
+
+  // 播放一个极短的静默音来唤醒音频
+  playSound('button-click');
+  await new Promise(resolve => setTimeout(resolve, 100));
 }
 
 export function setSoundEnabled(enabled: boolean) {

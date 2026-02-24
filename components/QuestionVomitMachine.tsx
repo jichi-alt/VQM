@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, X, Trash2, Activity, Trophy, LogIn, LogOut } from 'lucide-react';
-import { generatePhilosophicalQuestion, saveAnsweredQuestion, clearAnsweredQuestions, getAnsweredQuestions } from '../services/questionService';
-import { QuestionData } from '../types';
-import { MemoryFragment, getRandomFragment, MEMORY_FRAGMENTS } from '../services/memoryFragments';
+import { generatePhilosophicalQuestion, saveAnsweredQuestion, clearAnsweredQuestions, getAnsweredQuestions } from '../src/services/question.service';
+import { QuestionData, User, Streak } from '../src/types';
+import { MemoryFragment, getRandomFragment, MEMORY_FRAGMENTS } from '../src/services/memoryFragments';
 import { PrologueScene } from './PrologueScene';
-import { playSound, switchBGM, type BGMType } from '../services/audioService';
+import { playSound, switchBGM, type BGMType } from '../src/services/audio.service';
 import { AudioControl } from './AudioControl';
-import { getAuthService, type UserProfile } from '../services/authService';
+import { getAuthService } from '../src/services/auth.service';
+import { getStreakService } from '../src/services/streak.service';
+import { getAnswerService } from '../src/services/answer.service';
 import { AuthModal } from './AuthModal';
 import {
   SilentObserverModal,
@@ -45,7 +47,7 @@ export const QuestionVomitMachine: React.FC = () => {
   const [audioInitialized, setAudioInitialized] = useState(false);
 
   // 认证相关状态
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [pendingLoginPrompt, setPendingLoginPrompt] = useState(false); // 待显示的登录提醒
@@ -654,11 +656,14 @@ export const QuestionVomitMachine: React.FC = () => {
       // 1. 如果已登录，先保存到云端
       if (currentUser) {
         console.log('用户已登录，保存到云端...');
-        const authService = getAuthService();
-        const result = await authService.saveAnswer(
+        const answerService = getAnswerService();
+        const result = await answerService.saveAnswer(
+          currentUser.id,
           currentQuestion.id,
           currentQuestion.text,
-          userInput
+          userInput,
+          currentQuestion.day,
+          currentQuestion.chapter
         );
 
         if (!result.success) {

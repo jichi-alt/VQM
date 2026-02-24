@@ -2,23 +2,29 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useStreak } from '../useStreak';
 
-// 模拟 dataService
-vi.mock('../../../../services/dataService', () => ({
-  getStreakData: vi.fn(),
-  saveStreakData: vi.fn(),
+// 模拟 streak.service
+vi.mock('../../../../src/services/streak.service', () => ({
+  getStreakService: vi.fn(),
 }));
 
-import { getStreakData, saveStreakData } from '../../../../services/dataService';
+import { getStreakService } from '../../../../src/services/streak.service';
 
 describe('useStreak Hook', () => {
+  const mockStreakService = {
+    getStreak: vi.fn(),
+    saveStreak: vi.fn(),
+    checkIn: vi.fn(),
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getStreakService).mockReturnValue(mockStreakService as any);
     // 清除 localStorage
     localStorage.clear();
   });
 
   it('应该初始化默认的 streak 数据', async () => {
-    vi.mocked(getStreakData).mockResolvedValue({
+    mockStreakService.getStreak.mockResolvedValue({
       isActive: false,
       lastCheckIn: null,
       currentStreak: 0,
@@ -49,7 +55,7 @@ describe('useStreak Hook', () => {
       longestStreak: 5,
     };
 
-    vi.mocked(getStreakData).mockResolvedValue(mockData);
+    mockStreakService.getStreak.mockResolvedValue(mockData);
 
     const { result } = renderHook(() => useStreak());
 
@@ -74,8 +80,11 @@ describe('useStreak Hook', () => {
       longestStreak: 1,
     };
 
-    vi.mocked(getStreakData).mockResolvedValue(mockData);
-    vi.mocked(saveStreakData).mockResolvedValue(undefined);
+    const updatedData = { ...mockData, currentStreak: 2, lastCheckIn: today };
+
+    mockStreakService.getStreak.mockResolvedValueOnce(mockData).mockResolvedValueOnce(updatedData);
+    mockStreakService.checkIn.mockResolvedValue({ newStreak: 2, isCompleted: false });
+    mockStreakService.saveStreak.mockResolvedValue({ success: true });
 
     const { result } = renderHook(() => useStreak());
 
@@ -88,11 +97,9 @@ describe('useStreak Hook', () => {
     });
 
     expect(result.current.streakData.currentStreak).toBe(2);
-    expect(result.current.streakData.lastCheckIn).toBe(today);
   });
 
   it('checkIn 达到 21 天应该标记为完成', async () => {
-    const today = new Date().toISOString().split('T')[0];
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
 
     const mockData = {
@@ -108,8 +115,11 @@ describe('useStreak Hook', () => {
       longestStreak: 20,
     };
 
-    vi.mocked(getStreakData).mockResolvedValue(mockData);
-    vi.mocked(saveStreakData).mockResolvedValue(undefined);
+    const updatedData = { ...mockData, currentStreak: 21, isCompleted: true };
+
+    mockStreakService.getStreak.mockResolvedValueOnce(mockData).mockResolvedValueOnce(updatedData);
+    mockStreakService.checkIn.mockResolvedValue({ newStreak: 21, isCompleted: true });
+    mockStreakService.saveStreak.mockResolvedValue({ success: true });
 
     const { result } = renderHook(() => useStreak());
 

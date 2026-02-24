@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { LogIn, LogOut, Mail } from 'lucide-react';
-import { setBGMVolume, setBGMEnabled, setSoundVolume, setSoundEnabled, isBGMEnabled, isSoundEnabled, initBGMManager, playSound } from '../services/audioService';
-import type { UserProfile } from '../supabaseClient';
+import { setBGMVolume, setBGMEnabled, setSoundVolume, setSoundEnabled, isBGMEnabled, isSoundEnabled, initBGMManager, playSound } from '../src/services/audio.service';
+import type { User } from '../src/types';
 
 interface AudioControlProps {
-  currentUser: UserProfile | null;
+  currentUser: User | null;
   onLogin: () => void;
   onLogout: () => void;
 }

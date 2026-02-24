@@ -194,3 +194,46 @@ export function getRandomFragment(currentDay: number, viewedIds: string[]): Memo
   if (available.length === 0) return null;
   return available[Math.floor(Math.random() * available.length)];
 }
+
+// 本地存储 key
+const VIEWED_FRAGMENTS_KEY = 'qvm_viewed_fragments';
+
+/**
+ * 获取已查看的记忆碎片ID列表
+ */
+export function getViewedFragments(): string[] {
+  try {
+    const stored = localStorage.getItem(VIEWED_FRAGMENTS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (e) {
+    console.error('Failed to get viewed fragments:', e);
+    return [];
+  }
+}
+
+/**
+ * 保存已查看的记忆碎片ID
+ */
+export function saveViewedFragment(fragmentId: string): void {
+  try {
+    const viewed = getViewedFragments();
+    if (!viewed.includes(fragmentId)) {
+      viewed.push(fragmentId);
+      localStorage.setItem(VIEWED_FRAGMENTS_KEY, JSON.stringify(viewed));
+      console.log('[MemoryFragment] 保存已查看碎片:', fragmentId);
+    }
+  } catch (e) {
+    console.error('Failed to save viewed fragment:', e);
+  }
+}
+
+/**
+ * 清除已查看碎片的记录（用于测试）
+ */
+export function clearViewedFragments(): void {
+  try {
+    localStorage.removeItem(VIEWED_FRAGMENTS_KEY);
+  } catch (e) {
+    console.error('Failed to clear viewed fragments:', e);
+  }
+}

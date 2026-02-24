@@ -3,11 +3,11 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { useAuth } from '../useAuth';
 
 // 模拟 authService
-vi.mock('../../../../services/authService', () => ({
+vi.mock('../../../../src/services/auth.service', () => ({
   getAuthService: vi.fn(),
 }));
 
-import { getAuthService } from '../../../../services/authService';
+import { getAuthService } from '../../../../src/services/auth.service';
 
 describe('useAuth Hook', () => {
   const mockAuthService = {

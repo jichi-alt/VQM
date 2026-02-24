@@ -3,7 +3,8 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { getDailyState, saveDailyState, type DailyState } from '../../services/dataService';
+import { localStorage, LocalStorageKeys } from '../../src/lib/localStorage';
+import type { DailyState } from '../../src/types';
 
 const createEmptyDailyState = (): DailyState => ({
   date: new Date().toISOString().split('T')[0],
@@ -17,8 +18,8 @@ export const useDailyState = (userId?: string) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadDailyState = async () => {
-      const data = await getDailyState(userId);
+    const loadDailyState = () => {
+      const data = localStorage.get<DailyState>(LocalStorageKeys.DAILY_STATE, null);
       if (data) {
         setDailyState(data);
       } else {
@@ -32,8 +33,8 @@ export const useDailyState = (userId?: string) => {
   const updateDailyState = useCallback(async (updates: Partial<DailyState>) => {
     const newState = { ...dailyState, ...updates };
     setDailyState(newState);
-    await saveDailyState(newState, userId);
-  }, [dailyState, userId]);
+    localStorage.set(LocalStorageKeys.DAILY_STATE, newState);
+  }, [dailyState]);
 
   const addAnswer = useCallback(async (content: string) => {
     const newAnswers = [

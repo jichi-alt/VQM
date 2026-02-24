@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
-import { playSound } from '../services/audioService';
+import { playSound, initAudioSystem } from '../src/services/audio.service';
 
 interface PrologueSceneProps {
   onComplete: () => void;
@@ -24,6 +24,7 @@ export const PrologueScene: React.FC<PrologueSceneProps> = ({ onComplete, onSkip
   const [showText, setShowText] = useState(false);
   const [displayText, setDisplayText] = useState('');
   const [canContinue, setCanContinue] = useState(false);
+  const [audioInitialized, setAudioInitialized] = useState(false);
 
   // 机器人容器引用
   const robotRef = useRef<HTMLDivElement>(null);
@@ -83,9 +84,26 @@ export const PrologueScene: React.FC<PrologueSceneProps> = ({ onComplete, onSkip
     }, 50);
   };
 
+  // 组件挂载时立即初始化音频
+  useEffect(() => {
+    const initAudio = async () => {
+      console.log('[Prologue] 开始初始化音频系统');
+      try {
+        await initAudioSystem();
+        console.log('[Prologue] 音频系统初始化成功');
+        setAudioInitialized(true);
+      } catch (error) {
+        console.warn('[Prologue] 音频初始化失败:', error);
+      }
+    };
+
+    initAudio();
+  }, []);
+
   // 3秒后显示机器人并执行飞入动画
   useEffect(() => {
     const timer1 = setTimeout(() => {
+      console.log('[Prologue] 播放机器人降临音效，audioInitialized:', audioInitialized);
       playSound('robot-arrival'); // 播放机器人降临音效
 
       // 立即设置初始状态（避免闪烁）
@@ -132,7 +150,7 @@ export const PrologueScene: React.FC<PrologueSceneProps> = ({ onComplete, onSkip
       clearTimeout(timer1);
       clearTimeout(timer2);
     };
-  }, []);
+  }, [audioInitialized]);
 
   return (
     <div style={{

@@ -3,10 +3,11 @@
  */
 
 import { useState, useEffect } from 'react';
-import { getAuthService, type UserProfile } from '../../services/authService';
+import { getAuthService } from '../../src/services/auth.service';
+import type { User } from '../../src/types';
 
 export const useAuth = () => {
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 
 interface MemoryFragmentModalProps {
@@ -13,6 +13,16 @@ interface MemoryFragmentModalProps {
  * MemoryFragmentModal - 记忆碎片展示弹窗组件
  */
 export const MemoryFragmentModal = ({ isOpen, onClose, content, chapter, currentDay }: MemoryFragmentModalProps) => {
+  // 锁定 body 滚动
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   // 章节颜色
@@ -26,7 +36,7 @@ export const MemoryFragmentModal = ({ isOpen, onClose, content, chapter, current
   const colors = chapterColors[chapter] || chapterColors[1];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-500 scanlines perspective-1000">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-500 scanlines perspective-1000">
       <div className={`w-[360px] ${colors.bg} border-2 ${colors.border} ${colors.glow} shadow-2xl flex flex-col overflow-hidden hologram relative flip-in`} style={{ transformStyle: 'preserve-3d' }}>
 
         {/* 动态光效边框 */}
