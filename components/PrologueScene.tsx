@@ -84,9 +84,13 @@ export const PrologueScene: React.FC<PrologueSceneProps> = ({ onComplete, onSkip
     }, 50);
   };
 
-  // 组件挂载时立即初始化音频
+  // 组件挂载时立即初始化音频（使用 ref 确保只执行一次）
+  const audioInitRef = useRef(false);
   useEffect(() => {
     const initAudio = async () => {
+      if (audioInitRef.current) return;
+      audioInitRef.current = true;
+
       console.log('[Prologue] 开始初始化音频系统');
       try {
         await initAudioSystem();
@@ -100,9 +104,16 @@ export const PrologueScene: React.FC<PrologueSceneProps> = ({ onComplete, onSkip
     initAudio();
   }, []);
 
-  // 3秒后显示机器人并执行飞入动画
+  // 3秒后显示机器人并执行飞入动画（使用 ref 确保只执行一次）
+  const animationStartedRef = useRef(false);
   useEffect(() => {
+    if (animationStartedRef.current) return;
+
     const timer1 = setTimeout(() => {
+      // 防止重复执行
+      if (animationStartedRef.current) return;
+      animationStartedRef.current = true;
+
       console.log('[Prologue] 播放机器人降临音效，audioInitialized:', audioInitialized);
       playSound('robot-arrival'); // 播放机器人降临音效
 
@@ -123,7 +134,7 @@ export const PrologueScene: React.FC<PrologueSceneProps> = ({ onComplete, onSkip
               scale: 1,
               opacity: 1,
               filter: 'blur(0px)',
-              duration: 2, // 缩短飞入时间，避免和文字重叠
+              duration: 5, // 与音效时长相等（5秒）
               ease: 'power2.out',
               onComplete: () => {
                 // 飞入完成后，轻微浮动
@@ -144,13 +155,13 @@ export const PrologueScene: React.FC<PrologueSceneProps> = ({ onComplete, onSkip
     const timer2 = setTimeout(() => {
       setShowText(true);
       startTypewriter();
-    }, 7000); // 机器人飞入完成（5秒）+ 2秒停顿 = 7秒后开始打字，确保完全同步
+    }, 8000); // 机器人飞入（5秒）+ 2秒停顿 = 7秒后开始打字，调整为8秒确保动画完成
 
     return () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
     };
-  }, [audioInitialized]);
+  }, []); // 移除 audioInitialized 依赖，使用 ref 控制只执行一次
 
   return (
     <div style={{

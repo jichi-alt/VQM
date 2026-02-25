@@ -1185,15 +1185,14 @@ export const QuestionVomitMachine: React.FC = () => {
 
                 {/* 测试各章节碎片 */}
                 <div className="space-y-1 mb-3">
-                  <p className="font-mono text-cyan-400/80">测试各章节随机碎片：</p>
+                  <p className="font-mono text-cyan-400/80">测试各章节随机碎片（完整流程）：</p>
                   <div className="flex gap-2 flex-wrap">
                     <button
                       onClick={() => {
                         const fragment = getRandomFragment(3, viewedFragmentIds);
                         if (fragment) {
                           setCurrentMemoryFragment(fragment);
-                          setShowMemoryModal(true);
-                          saveViewedFragment(fragment.id);
+                          setShowUnlockModal(true);  // 先显示解锁弹窗
                         } else {
                           alert('第1章碎片已全部看完，请清除记录');
                         }
@@ -1205,8 +1204,7 @@ export const QuestionVomitMachine: React.FC = () => {
                         const fragment = getRandomFragment(8, viewedFragmentIds);
                         if (fragment) {
                           setCurrentMemoryFragment(fragment);
-                          setShowMemoryModal(true);
-                          saveViewedFragment(fragment.id);
+                          setShowUnlockModal(true);  // 先显示解锁弹窗
                         } else {
                           alert('第2章碎片已全部看完，请清除记录');
                         }
@@ -1218,8 +1216,7 @@ export const QuestionVomitMachine: React.FC = () => {
                         const fragment = getRandomFragment(16, viewedFragmentIds);
                         if (fragment) {
                           setCurrentMemoryFragment(fragment);
-                          setShowMemoryModal(true);
-                          saveViewedFragment(fragment.id);
+                          setShowUnlockModal(true);  // 先显示解锁弹窗
                         } else {
                           alert('第3章碎片已全部看完，请清除记录');
                         }
@@ -1231,7 +1228,7 @@ export const QuestionVomitMachine: React.FC = () => {
                         const finalFragment = MEMORY_FRAGMENTS.find(f => f.id === 'final');
                         if (finalFragment) {
                           setCurrentMemoryFragment(finalFragment);
-                          setShowMemoryModal(true);
+                          setShowUnlockModal(true);  // 先显示解锁弹窗
                         }
                       }}
                       className="px-2 py-1 bg-amber-400/90 hover:bg-amber-400 border border-amber-500 text-space-900 rounded font-bold glow-text"

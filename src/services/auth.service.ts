@@ -96,16 +96,8 @@ export class AuthService {
 
       console.log('[Auth] 注册成功:', data);
 
-      // 创建用户资料
-      if (data.user) {
-        await this.userRepo.createProfile({
-          id: data.user.id,
-          email: data.user.email!,
-          username: credentials.username,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
-      }
+      // 注意：profile 由数据库 trigger 自动创建，不需要手动创建
+      // trigger: handle_new_user() 在 auth.users 上触发
 
       return { success: true };
     } catch (error: any) {
