@@ -13,6 +13,9 @@ interface MemoryFragmentModalProps {
  * MemoryFragmentModal - 记忆碎片展示弹窗组件
  */
 export const MemoryFragmentModal = ({ isOpen, onClose, content, chapter, currentDay }: MemoryFragmentModalProps) => {
+  // 调试日志
+  console.log('[MemoryFragmentModal] 渲染，isOpen:', isOpen, 'content:', content?.substring(0, 50));
+
   // 锁定 body 滚动
   useEffect(() => {
     if (isOpen) {
@@ -23,7 +26,12 @@ export const MemoryFragmentModal = ({ isOpen, onClose, content, chapter, current
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    console.log('[MemoryFragmentModal] isOpen 为 false，不渲染');
+    return null;
+  }
+
+  console.log('[MemoryFragmentModal] isOpen 为 true，开始渲染...');
 
   // 章节颜色
   const chapterColors: Record<number | 'final', { bg: string; border: string; text: string; glow: string; title: string }> = {

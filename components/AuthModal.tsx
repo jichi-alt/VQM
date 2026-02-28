@@ -24,29 +24,57 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
     setLoading(true);
 
     try {
+      let result;
+
       if (isLogin) {
-        const result = await signIn({ email, password });
+        result = await signIn({ email, password });
         if (!result.success) {
-          setError(result.error || '登录失败');
+          // 友好的错误提示
+          const friendlyError = getFriendlyError(result.error || '登录失败');
+          setError(friendlyError);
           setLoading(false);
           return;
         }
       } else {
-        const result = await signUp({ email, password, username });
+        result = await signUp({ email, password, username });
         if (!result.success) {
-          setError(result.error || '注册失败');
+          const friendlyError = getFriendlyError(result.error || '注册失败');
+          setError(friendlyError);
           setLoading(false);
           return;
         }
       }
 
-      // 成功
-      onAuthSuccess();
+      // 成功 - 立即关闭 loading
+      setLoading(false);
+
+      // 等待一小段时间让 onAuthStateChange 触发
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // 关闭模态框
       handleClose();
+      onAuthSuccess();
     } catch (err: any) {
-      setError(err.message || '操作失败');
+      setError(getFriendlyError(err.message || '操作失败'));
       setLoading(false);
     }
+  };
+
+  // 友好的错误消息转换
+  const getFriendlyError = (error: string): string => {
+    if (error.includes('Email not confirmed')) {
+      return '请先确认您的邮箱，或检查邮箱是否被屏蔽';
+    }
+    if (error.includes('Invalid login credentials')) {
+      return '邮箱或密码错误，请检查后重试';
+    }
+    if (error.includes('User already registered')) {
+      return '该邮箱已注册，请直接登录';
+    }
+    if (error.includes('Network') || error.includes('fetch')) {
+      return '网络连接失败，请检查网络后重试';
+    }
+    return error;
   };
 
   const handleClose = () => {

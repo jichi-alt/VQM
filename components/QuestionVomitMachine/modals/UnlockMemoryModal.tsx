@@ -11,14 +11,24 @@ interface UnlockMemoryModalProps {
 export const UnlockMemoryModal = ({ isOpen, onConfirm }: UnlockMemoryModalProps) => {
   const [isUnlocking, setIsUnlocking] = useState(false);
 
+  // 调试日志
+  console.log('[UnlockMemoryModal] 渲染，isOpen:', isOpen);
+
   const handleUnlock = () => {
+    console.log('[UnlockMemoryModal] 点击解锁按钮');
     setIsUnlocking(true);
     setTimeout(() => {
+      console.log('[UnlockMemoryModal] 调用 onConfirm');
       onConfirm();
     }, 800);
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    console.log('[UnlockMemoryModal] isOpen 为 false，不渲染');
+    return null;
+  }
+
+  console.log('[UnlockMemoryModal] isOpen 为 true，渲染解锁弹窗');
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-500">

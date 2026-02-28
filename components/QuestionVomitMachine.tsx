@@ -306,14 +306,17 @@ export const QuestionVomitMachine: React.FC = () => {
   const checkIn = (): { newStreak: number; isCompleted: boolean } | null => {
     const today = getTodayDate();
 
+    console.log('📅 打卡检查:', { today, lastCheckIn: streakData.lastCheckIn });
+
     // 如果今天已经打卡，不再重复打卡
     if (hasCheckedInToday()) {
-      console.log('今天已经打卡过了');
+      console.log('⚠️ 今天已经打卡过了，跳过');
       return null;
     }
 
     // 计算新的连续天数
     const newStreak = calculateNewStreak(streakData);
+    console.log('📊 计算新连续天数:', newStreak);
 
     // 更新最长记录
     const newLongestStreak = Math.max(streakData.longestStreak, newStreak);
@@ -350,6 +353,7 @@ export const QuestionVomitMachine: React.FC = () => {
     }
 
     // 显示打卡成功弹窗
+    console.log('🎬 显示打卡成功弹窗，天数:', newStreak);
     setCheckInDay(newStreak);
     setShowCheckInModal(true);
 
@@ -501,7 +505,7 @@ export const QuestionVomitMachine: React.FC = () => {
   // 触发记忆碎片的函数 - 仅在保存答案后调用
   const tryTriggerMemoryFragment = () => {
     const currentDay = streakData.currentStreak;
-    console.log('🧩 尝试触发记忆碎片', { currentDay, viewedIds: viewedFragmentIds });
+    console.log('🧩 尝试触发记忆碎片', { currentDay, viewedFragmentIds, totalFragments: MEMORY_FRAGMENTS.length });
 
     // 21天必触发最终结局
     if (currentDay >= 21) {
@@ -509,7 +513,9 @@ export const QuestionVomitMachine: React.FC = () => {
       if (finalFragment && !viewedFragmentIds.includes('final')) {
         console.log('✨ 触发最终结局');
         setCurrentMemoryFragment(finalFragment);
-        setShowUnlockModal(true);  // 显示解锁弹窗
+        console.log('[tryTriggerMemoryFragment] 设置 showUnlockModal = true (final)');
+        // 使用 setTimeout 确保 state 更新按顺序执行
+        setTimeout(() => setShowUnlockModal(true), 0);
         return;
       }
     }
@@ -521,28 +527,51 @@ export const QuestionVomitMachine: React.FC = () => {
     if (milestoneFragment) {
       console.log('✨ 触发里程碑碎片', milestoneFragment.id);
       setCurrentMemoryFragment(milestoneFragment);
-      setShowUnlockModal(true);  // 显示解锁弹窗
+      console.log('[tryTriggerMemoryFragment] 设置 showUnlockModal = true (milestone)');
+      setTimeout(() => setShowUnlockModal(true), 0);
       return;
     }
 
     // 随机触发一个当前章节的碎片
     const fragment = getRandomFragment(currentDay, viewedFragmentIds);
     if (fragment) {
-      console.log('✨ 触发随机碎片', fragment.id);
+      console.log('✨ 触发随机碎片', fragment.id, '内容:', fragment.content);
       setCurrentMemoryFragment(fragment);
-      setShowUnlockModal(true);  // 显示解锁弹窗
+      console.log('[tryTriggerMemoryFragment] 设置 showUnlockModal = true (random)');
+      setTimeout(() => setShowUnlockModal(true), 0);
     } else {
       console.log('⚠️ 没有可用的碎片');
+      console.log('可用碎片检查:', {
+        currentDay,
+        viewedFragmentIds,
+        allFragments: MEMORY_FRAGMENTS.map(f => ({ id: f.id, minDay: f.minDay, maxDay: f.maxDay, viewed: viewedFragmentIds.includes(f.id) }))
+      });
     }
   };
 
   // 确认解锁记忆碎片
   const handleUnlockMemory = () => {
+    console.log('[handleUnlockMemory] 被调用');
+    console.log('[handleUnlockMemory] currentMemoryFragment:', currentMemoryFragment);
     playSound('unlock'); // 播放解锁音效
-    setShowUnlockModal(false);
+
     if (currentMemoryFragment) {
       saveViewedFragment(currentMemoryFragment.id);
-      setShowMemoryModal(true);
+      console.log('[handleUnlockMemory] 碎片内容:', currentMemoryFragment.content);
+
+      // 先关闭解锁弹窗，等待一小段时间再打开记忆碎片弹窗
+      // 这样确保两个弹窗不会同时渲染，避免 z-index 冲突
+      setShowUnlockModal(false);
+
+      console.log('[handleUnlockMemory] 等待 100ms 后显示记忆碎片弹窗');
+      setTimeout(() => {
+        console.log('[handleUnlockMemory] 设置 showMemoryModal = true');
+        setShowMemoryModal(true);
+        console.log('[handleUnlockMemory] showMemoryModal 已设置为 true');
+      }, 100); // 短暂延迟确保解锁弹窗完全卸载
+    } else {
+      console.error('[handleUnlockMemory] currentMemoryFragment 为空！');
+      setShowUnlockModal(false);
     }
   };
 
@@ -593,14 +622,24 @@ export const QuestionVomitMachine: React.FC = () => {
     playSound('button-click');
   };
 
-  const handleAuthSuccess = () => {
-    // 认证成功后刷新页面状态
-    window.location.reload();
+  const handleAuthSuccess = async () => {
+    // 认证成功后立即关闭模态框
+    setShowAuthModal(false);
+    playSound('button-click');
+
+    // onAuthStateChange 监听器会自动更新 currentUser
+    // 不需要手动操作
   };
 
   // 处理记忆碎片弹窗关闭
   const handleMemoryModalClose = () => {
     setShowMemoryModal(false);
+    // 记忆碎片关闭后，跳转到历史页面
+    console.log('[MemoryFragmentModal] 关闭，准备跳转到历史页面');
+    setTimeout(() => {
+      setView('history');
+    }, 300);
+
     // 如果有待显示的登录提醒，现在显示
     if (pendingLoginPrompt) {
       console.log('记忆碎片关闭，显示登录提醒');
@@ -653,32 +692,41 @@ export const QuestionVomitMachine: React.FC = () => {
     };
 
     try {
-      // 1. 如果已登录，先保存到云端
+      // 1. 如果已登录，尝试保存到云端（带超时保护）
       if (currentUser) {
         console.log('用户已登录，保存到云端...');
-        const answerService = getAnswerService();
-        const result = await answerService.saveAnswer(
-          currentUser.id,
-          currentQuestion.id,
-          currentQuestion.text,
-          userInput,
-          currentQuestion.day,
-          currentQuestion.chapter
-        );
+        try {
+          const answerService = getAnswerService();
+          // 添加超时保护 - 5秒超时
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('云端保存超时')), 5000)
+          );
 
-        if (!result.success) {
-          console.error('云端保存失败:', result.error);
-          // 云端保存失败不影响本地保存
-        } else {
-          console.log('云端保存成功！');
+          const savePromise = answerService.saveAnswer(
+            currentUser.id,
+            currentQuestion.id,
+            currentQuestion.text,
+            userInput,
+            currentQuestion.day,
+            currentQuestion.chapter
+          );
+
+          const result = await Promise.race([savePromise, timeoutPromise]) as { success: boolean; error?: string };
+
+          if (!result.success) {
+            console.error('云端保存失败:', result.error);
+            // 云端保存失败不影响本地保存
+          } else {
+            console.log('云端保存成功！');
+          }
+        } catch (err) {
+          console.error('云端保存异常（不影响本地保存）:', err);
         }
       } else {
-        // 2. 如果未登录，标记需要在记忆碎片关闭后显示登录提醒
-        console.log('用户未登录，标记待显示登录提醒');
-        setPendingLoginPrompt(true);
+        console.log('用户未登录');
       }
 
-      // 3. 保存到本地（无论是否登录）
+      // 2. 保存到本地（无论是否登录，也无论云端是否成功）
       const archives: ArchiveEntry[] = JSON.parse(localStorage.getItem('vqm_archives') || '[]');
       const existingIndex = archives.findIndex(a => a.question.id === currentQuestion.id);
 
@@ -712,20 +760,22 @@ export const QuestionVomitMachine: React.FC = () => {
       // 更新机器人离开状态
       updateRobotLeftStatus();
 
-      // ==================== Phase 2: 集成打卡逻辑 ====================
-      // 只有在非编辑历史记录模式且是新记录或首次保存时才打卡
-      if (!isEditingHistory) {
-        const checkInResult = checkIn(); // 执行打卡，并返回结果
-        // 如果打卡成功，显示打卡成功弹窗（包含庆祝动画）
+      // 3. 打卡逻辑（只在非编辑模式且今天未打卡时执行）
+      if (!isEditingHistory && !hasCheckedInToday()) {
+        console.log('准备执行打卡...');
+        const checkInResult = checkIn();
         if (checkInResult) {
-          console.log('打卡成功，准备显示庆祝弹窗');
-          // 不跳转，让弹窗自然显示
+          console.log('打卡成功，弹窗应该已经显示');
+          // checkIn() 函数内部已经设置了 setShowCheckInModal(true)
+          // 不需要额外操作，直接返回让弹窗显示
           return;
         }
       }
 
-      // 保存成功后跳转到历史页
+      // 4. 跳转到历史页面（如果没打卡或已打卡）
+      console.log('跳转到历史页面');
       setView('history');
+      playSound('button-click');
     } catch (error) {
       console.error('保存失败:', error);
       alert('保存失败，请重试');
@@ -1304,8 +1354,8 @@ export const QuestionVomitMachine: React.FC = () => {
         isOpen={showCheckInModal}
         onClose={() => {
           setShowCheckInModal(false);
-          // 打卡成功弹窗关闭后，自动跳转到历史页面
-          setTimeout(() => setView('history'), 300);
+          // 不再自动跳转，等待记忆碎片流程完成
+          // 记忆碎片关闭后会自动跳转
         }}
         onUnlock={tryTriggerMemoryFragment}
         day={checkInDay}
@@ -1455,8 +1505,8 @@ export const QuestionVomitMachine: React.FC = () => {
         isOpen={showCheckInModal}
         onClose={() => {
           setShowCheckInModal(false);
-          // 打卡成功弹窗关闭后，自动跳转到历史页面
-          setTimeout(() => setView('history'), 300);
+          // 不再自动跳转，等待记忆碎片流程完成
+          // 记忆碎片关闭后会自动跳转
         }}
         onUnlock={tryTriggerMemoryFragment}
         day={checkInDay}
@@ -1584,8 +1634,8 @@ export const QuestionVomitMachine: React.FC = () => {
         isOpen={showCheckInModal}
         onClose={() => {
           setShowCheckInModal(false);
-          // 打卡成功弹窗关闭后，自动跳转到历史页面
-          setTimeout(() => setView('history'), 300);
+          // 不再自动跳转，等待记忆碎片流程完成
+          // 记忆碎片关闭后会自动跳转
         }}
         onUnlock={tryTriggerMemoryFragment}
         day={checkInDay}

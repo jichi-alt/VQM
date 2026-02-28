@@ -41,17 +41,36 @@ export class AuthService {
     this.listeners.push(callback);
 
     // 监听 Supabase 认证事件
-    supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('[Auth] 认证状态变化:', event);
 
       if (event === 'SIGNED_IN' && session?.user) {
-        // 获取用户完整信息
-        this.currentUser = await this.userRepo.findById(session.user.id);
+        // 先用 session 数据创建临时用户对象，立即通知 UI
+        const tempUser: User = {
+          id: session.user.id,
+          email: session.user.email || '',
+          username: session.user.user_metadata?.username || null,
+          created_at: new Date(session.user.created_at).toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+
+        this.currentUser = tempUser;
+        this.notifyListeners(); // 立即通知 UI 更新
+
+        // 然后异步获取完整的 profile（不阻塞 UI）
+        try {
+          const profile = await this.userRepo.findById(session.user.id);
+          if (profile) {
+            this.currentUser = profile;
+            this.notifyListeners(); // 再次通知 UI 更新完整数据
+          }
+        } catch (err) {
+          console.error('[Auth] 获取 profile 失败，使用 session 数据:', err);
+        }
       } else if (event === 'SIGNED_OUT') {
         this.currentUser = null;
+        this.notifyListeners();
       }
-
-      this.notifyListeners();
     });
 
     // 返回清理函数
@@ -60,6 +79,7 @@ export class AuthService {
       if (index > -1) {
         this.listeners.splice(index, 1);
       }
+      subscription?.unsubscribe();
     };
   }
 
@@ -123,9 +143,33 @@ export class AuthService {
 
       console.log('[Auth] 登录成功:', data);
 
-      // 获取用户完整信息
+      // 获取用户完整信息（如果失败则使用 session 数据）
       if (data.user) {
-        this.currentUser = await this.userRepo.findById(data.user.id);
+        try {
+          const profile = await this.userRepo.findById(data.user.id);
+          if (profile) {
+            this.currentUser = profile;
+          } else {
+            // Profile 不存在，使用 session 数据创建临时用户对象
+            this.currentUser = {
+              id: data.user.id,
+              email: data.user.email || '',
+              username: data.user.user_metadata?.username || null,
+              created_at: new Date(data.user.created_at).toISOString(),
+              updated_at: new Date().toISOString(),
+            };
+          }
+        } catch (err) {
+          console.error('[Auth] 获取 profile 失败，使用 session 数据:', err);
+          // 即使 profile 查询失败，也使用 session 数据
+          this.currentUser = {
+            id: data.user.id,
+            email: data.user.email || '',
+            username: data.user.user_metadata?.username || null,
+            created_at: new Date(data.user.created_at).toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+        }
         this.notifyListeners();
       }
 
