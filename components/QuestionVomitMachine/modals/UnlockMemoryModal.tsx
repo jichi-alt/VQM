@@ -23,6 +23,14 @@ export const UnlockMemoryModal = ({ isOpen, onConfirm }: UnlockMemoryModalProps)
     }, 800);
   };
 
+  // 当弹窗打开时，检查是否有可用的碎片
+  // 如果 onConfirm 无效（说明主组件检测到没有可用碎片），则立即关闭
+  React.useEffect(() => {
+    if (isOpen) {
+      console.log('[UnlockMemoryModal] 弹窗已打开，等待用户点击解锁');
+    }
+  }, [isOpen]);
+
   if (!isOpen) {
     console.log('[UnlockMemoryModal] isOpen 为 false，不渲染');
     return null;

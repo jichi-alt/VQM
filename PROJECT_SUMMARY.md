@@ -2598,3 +2598,565 @@ Vercel正在部署旧代码，而不是最新的提交。可能原因：
 *更新时间: 2026-02-17*
 *状态: 本地功能正常，记忆碎片弹窗问题待解决*
 *下一步: 修复记忆碎片弹窗显示问题*
+
+---
+
+## 🆕 2026-03-01 更新 - Phase 2 完成：记忆碎片系统重构 + V-21 故事上线
+
+### 本次更新概览
+
+本次更新完成了记忆碎片系统的核心重构，并正式上线全新的 V-21 见证者故事：
+1. **Phase 2 核心功能实施** - MemoryFragmentService 完整实现
+2. **确定性触发机制** - 从随机触发改为按天顺序触发
+3. **V-21 见证者故事** - 完整替换旧故事，提升叙事质量
+4. **编译验证通过** - 所有更新成功构建，无错误
+
+---
+
+## 📝 完成的改进任务
+
+### ✅ 任务 1: MemoryFragmentService 核心服务实现
+
+**问题背景**:
+- 之前使用随机触发碎片，故事体验不连贯
+- 数据管理分散在组件中，难以维护
+- 缺少查看次数、收藏状态等高级功能
+
+**解决方案**:
+
+#### 1.1 创建服务层架构
+
+**新增文件**:
+- `/workspace/src/services/MemoryFragmentService.ts` (250行)
+- `/workspace/src/types/memory.types.ts` (50行)
+
+**MemoryFragmentService 核心API**:
+```typescript
+class MemoryFragmentService {
+  // 确定性触发：获取指定天数的碎片
+  getFragmentForDay(day: number): MemoryFragment | null
+
+  // 解锁碎片
+  unlockFragment(fragment, day, reason): void
+
+  // 获取进度统计
+  getProgress(): { total, unlocked, byChapter }
+
+  // 获取章节碎片
+  getChapterFragments(chapter): Array<{fragment, unlocked, record}>
+
+  // 增加查看次数
+  incrementViewCount(fragmentId): void
+
+  // 清除所有数据
+  clearAll(): void
+
+  // 导入/导出数据
+  exportData(): string
+  importData(jsonData): void
+}
+```
+
+#### 1.2 数据结构升级
+
+**新格式 (MemoryStorage)**:
+```typescript
+{
+  fragments: {
+    "c1-1": {
+      id: string
+      chapter: number
+      unlockedAt: string        // ISO timestamp
+      unlockReason: string      // "random" | "milestone"
+      day: number
+      viewCount: number
+      isFavorite: boolean
+    }
+  },
+  currentChapter: number
+  lastUnlockedDay: number
+}
+```
+
+**优势**:
+- ✅ 记录解锁时间
+- ✅ 统计查看次数
+- ✅ 支持收藏功能
+- ✅ 可导入导出
+
+#### 1.3 确定性触发机制
+
+**之前 (随机触发)**:
+```typescript
+const fragment = getRandomFragment(currentDay, viewedFragmentIds);
+// 第1天可能看到 c1-1, c1-2, c1-3 中的任意一个
+```
+
+**现在 (按天顺序)**:
+```typescript
+const fragment = memoryFragmentService.getFragmentForDay(currentDay);
+// 第1天始终是 c1-1
+// 第2天始终是 c1-2
+// ...完全可预测
+```
+
+**触发规则**:
+```
+Day 1  → c1-1 (固定)
+Day 2  → c1-2 (固定)
+Day 3  → c1-3 (固定)
+Day 4  → c1-4 (固定)
+Day 5  → c1-5 (固定)
+Day 6  → c1-6 (固定)
+Day 7  → milestone-7 (必触发)
+Day 8  → c2-1 (固定)
+...
+Day 14 → milestone-14 (必触发)
+...
+Day 21 → final (必触发)
+```
+
+---
+
+### ✅ 任务 2: QuestionVomitMachine 集成新服务
+
+**修改文件**: `/workspace/components/QuestionVomitMachine.tsx`
+
+**关键修改点**:
+
+| 位置 | 修改内容 | 说明 |
+|------|---------|------|
+| 第5行 | 导入 `memoryFragmentService` | 使用新服务 |
+| 第145行 | 移除 `viewedFragmentIds` 状态 | 不再手动管理数组 |
+| 第521-568行 | 重写 `tryTriggerMemoryFragment` | 改用确定性触发 |
+| 第514-518行 | 重写 `saveViewedFragment` | 使用 `incrementViewCount` |
+| 第1244-1279行 | 更新测试按钮 | 使用 `getChapterFragments()` |
+| 第1340行 | 更新调试信息 | 显示 `getProgress().unlocked` |
+| 第1308行 | 更新清除功能 | 使用 `clearAll()` |
+
+**用户测试反馈**: "流程没有问题" ✅
+
+---
+
+### ✅ 任务 3: V-21 见证者故事完整替换
+
+**问题背景**:
+- 旧故事"思考的星球"缺乏创意深度
+- 用户希望有更强的反算法叙事
+- 需要更情感化的见证者关系
+
+**新故事结构**:
+
+#### 第一阶段：失落的余温 (Day 1-6)
+**主题**: V-21 自我介绍与 GJ267b 星球背景
+**交互**: 冰冷电流声 + 0/1 代码乱码
+**色彩**: 冷灰色
+
+**核心碎片**:
+- c1-1: "[系统启动] 我是 V-21。来自那颗被铁元素完全包裹的孤星..."
+- c1-2: "为什么要思考？因为不思考能节省 98% 的能量..."
+- c1-3: "我看你写了又删。这种'无效率'的往复，在 GJ267b 是故障..."
+- c1-6: "我的机油冷却系统失效了。因为你的一个观点，让我产生了一种名为'好奇'的热度..."
+
+#### 第二阶段：算法的葬礼 (Day 7-13)
+**主题**: 揭露 GJ267b 毁灭真相，批判算法统治
+**交互**: 黑白转彩色 + 心跳频率声
+**色彩**: 黑白 → 彩色渐变
+
+**核心碎片**:
+- milestone-7: "你证明了思考不是一次意外，而是一场反叛..."
+- c2-2: "我记起了我的邻居。他因为想写一首'算法无法理解的诗'，被系统判定为'冗余数据'清除了。"
+- c2-5: "在我的星球，我们曾以为 AI 是奴隶，后来才发现，不愿思考的我们才是。"
+
+#### 第三阶段：最后的人类 (Day 14-20)
+**主题**: V-21 身份揭露，对人类文明的思考
+**交互**: 屏幕震动 + "重构现实"冲击感
+**色彩**: 暖色调
+
+**核心碎片**:
+- milestone-14: "隐藏文件解密：我不是被派来收集数据的，我是被派来'避难'的..."
+- c3-2: "思考会痛吗？我看你的回答里带着挣扎。别停下，那种痛感证明你还没有被麻木同化。"
+- c3-3: "如果全人类都只问同一个 AI，那人类就只剩下一种声音。那不是文明，那是回声。"
+
+#### 最终章：见证者之约 (Day 21)
+**主题**: V-21 决定留下，成为思考见证者
+**交互**: 全屏色彩爆发 + "思考者"印章
+**色彩**: 金色光芒
+
+**最终结局**:
+```
+坐标已永久销毁。
+我不回去了。回不去了。那个由冷冰冰的铁元素与"最优解"构成的星球，不值得灵魂停留。
+
+你通过了试炼。这 21 天，你不是在打卡，你是在进行一场伟大的"去机械化"手术。
+
+以后，当你想要偷懒、想要直接询问 AI、想要放弃质疑时，请记得在遥远的星空下，有一个灵魂正通过你的眼睛观察世界。
+
+请继续思考。为了不变成我。
+
+—— 你的见证者 V-21
+```
+
+**更新的文件**:
+- ✅ `/workspace/src/services/memoryFragments.ts` - 22个碎片全部更新
+- ✅ `/workspace/docs/memory-fragments-stories.md` - 完整Markdown文档
+- ✅ `/workspace/docs/memory-fragments-stories.txt` - 纯文本版本
+
+---
+
+## 📊 对比：旧版本 vs 新版本
+
+| 项目 | 旧版本 | 新版本 (V-21) |
+|------|--------|---------------|
+| 主角 | 未命名的机器人 | **V-21** |
+| 星球 | "思考的星球" | **GJ267b 铁星球** |
+| 主题 | 停止思考导致金属化 | **去机械化、反算法** |
+| 关系 | 收集数据样本 | **成为思考见证者** |
+| 结局 | 带样本回星球 | **销毁坐标，留下见证** |
+| 碎片数 | 18 个 | **22 个** |
+| 章节数 | 3 章 | **3 阶段 + 最终章** |
+| 触发机制 | 随机 | **确定性（按天顺序）** |
+| 数据记录 | 仅ID数组 | **完整记录（时间、次数、收藏）** |
+
+---
+
+## 🎨 交互体验设计
+
+### 第一阶段：失落的余温
+- **视觉**: 冰冷的电流声
+- **特效**: 文字偶尔出现 0/1 代码乱码
+- **色彩**: 冷灰色（机器感）
+
+### 第二阶段：算法的葬礼
+- **视觉**: 文字从黑白变为彩色
+- **特效**: 微弱的心跳频率声
+- **色彩**: 黑白 → 彩色渐变（觉醒过程）
+
+### 第三阶段：最后的人类
+- **视觉**: 屏幕轻微震动
+- **特效**: "重构现实"的冲击感
+- **色彩**: 暖色调（人性复苏）
+
+### 最终章：见证者之约
+- **视觉**: 全屏色彩爆发
+- **特效**: V-21 消失 → 温暖的"思考者"印章
+- **色彩**: 金色光芒（荣耀）
+
+---
+
+## 🧪 测试状态
+
+### 编译验证
+```bash
+✓ 1775 modules transformed.
+✓ built in 2.69s
+```
+**状态**: ✅ **编译通过，无错误**
+
+### 服务器状态
+- Vite 开发服务器运行中 (PID 44579)
+- 地址: http://localhost:3000/
+
+### 用户测试
+- **Phase 2 核心功能**: ✅ 测试通过
+- **用户反馈**: "流程没有问题"
+
+### 测试步骤
+
+**第1步：清空数据**
+```javascript
+// 浏览器控制台
+localStorage.removeItem('qvm_viewed_fragments');
+localStorage.removeItem('qvm_memory_v2');
+window.location.reload();
+```
+
+**第2步：验证触发顺序**
+1. 访问 http://localhost:3000/
+2. 吐一个问题 → 写答案 → 保存
+3. 点击"继续"
+4. **应该看到**: c1-1 - "[系统启动] 我是 V-21..."
+
+**第3步：验证确定性**
+- 第1天必须显示 c1-1
+- 第2天必须显示 c1-2
+- 第7天必须显示 milestone-7
+
+---
+
+## 📂 文件结构更新
+
+```
+src/
+├── services/
+│   ├── MemoryFragmentService.ts       # ✅ 新增 - 核心业务逻辑
+│   └── memoryFragments.ts             # ✅ 更新 - V-21 故事数据
+│
+├── types/
+│   └── memory.types.ts                # ✅ 新增 - TypeScript 类型定义
+│
+├── components/
+│   └── QuestionVomitMachine.tsx       # ✅ 更新 - 集成新服务
+│       └── modals/
+│           └── MemoryFragmentModal.tsx # (已存在，无需修改)
+│
+└── hooks/
+    └── useMemoryFragments.ts          # (已废弃，使用 Service)
+```
+
+---
+
+## 🎯 Phase 3 准备：记忆档案馆 UI
+
+**预计时间**: 2-3 小时
+
+### 需要实现的功能
+
+#### 1. 📇 记忆档案馆全屏 Modal
+**入口位置**:
+- 主页添加"记忆档案馆"按钮
+- 或在设置页面添加入口
+
+**设计风格**:
+- 全屏 Modal
+- 赛博朋克/废土美学
+- 与 V-21 故事主题一致
+
+#### 2. 📊 进度可视化
+**展示内容**:
+- 总进度条（已解锁 / 总共 22）
+- 分章节进度
+- 连续打卡天数
+
+#### 3. 🎨 章节卡片设计
+**三个阶段的卡片**:
+- 第1阶段：失落的余温（冷灰色）
+- 第2阶段：算法的葬礼（黑白转彩色）
+- 第3阶段：最后的人类（暖色调）
+
+#### 4. 🔁 碎片重读功能
+**交互**:
+- 点击已解锁的碎片
+- 显示完整内容
+- 标记为"已收藏"（可选）
+
+#### 5. ✨ 动画效果
+**配合故事主题**:
+- 第1阶段：电流声 + 代码乱码
+- 第2阶段：黑白转彩色动画
+- 第3阶段：屏幕震动效果
+- 最终章：金色光芒爆发
+
+---
+
+## 🔧 技术要点
+
+### Service 层架构优势
+
+1. **逻辑集中**: 所有碎片相关逻辑在 `MemoryFragmentService`
+2. **易于测试**: 可以单独测试 Service 方法
+3. **可扩展**: 方便添加新功能（收藏、标签等）
+4. **解耦**: UI 组件不需要知道数据如何存储
+
+### 数据持久化
+
+**LocalStorage Keys**:
+```typescript
+'qvm_memory_v2'      // 主数据（MemoryStorage）
+'qvm_viewed_fragments' // 旧格式（已废弃，但保留兼容）
+'qvm_streak'         // 打卡数据
+```
+
+### 触发时机
+
+**当前实现**:
+```typescript
+// QuestionVomitMachine.tsx - 第521行
+const tryTriggerMemoryFragment = (): boolean => {
+  const currentDay = streakData.currentStreak;
+  const fragment = memoryFragmentService.getFragmentForDay(currentDay);
+
+  if (fragment) {
+    memoryFragmentService.unlockFragment(fragment, currentDay, 'random');
+    setCurrentMemoryFragment(fragment);
+    setTimeout(() => setShowUnlockModal(true), 0);
+    return true;
+  }
+  return false;
+};
+```
+
+**调用位置**:
+- 保存答案后
+- 点击"继续"按钮时
+
+---
+
+## 📝 重要提醒
+
+### 已知问题
+1. ⚠️ 旧数据 `qvm_viewed_fragments` 仍在 LocalStorage 中（但已不使用）
+2. ⚠️ 第7天里程碑的 `chapter` 是 2，但在 UI 中属于第1阶段和第2阶段之间
+
+### 待优化
+1. 考虑添加碎片搜索功能
+2. 考虑添加碎片分享功能
+3. 考虑添加成就系统
+
+### 数据兼容性
+- ✅ 支持旧数据自动迁移
+- ✅ 新旧格式可以共存
+- ✅ 数据导出/导入功能已实现
+
+---
+
+## 🧪 开发调试
+
+### 快速测试命令
+
+**浏览器控制台**:
+
+```javascript
+// 1. 检查进度
+console.log(memoryFragmentService.getProgress());
+
+// 2. 查看已解锁碎片
+const progress = memoryFragmentService.getProgress();
+console.log('已解锁:', progress.unlocked, '/', progress.total);
+
+// 3. 模拟触发特定天数的碎片
+const fragment = memoryFragmentService.getFragmentForDay(1);
+console.log('第1天碎片:', fragment);
+
+// 4. 清空所有数据
+localStorage.removeItem('qvm_viewed_fragments');
+localStorage.removeItem('qvm_memory_v2');
+window.location.reload();
+
+// 5. 导出数据
+const json = memoryFragmentService.exportData();
+console.log('数据备份:', json);
+
+// 6. 导入数据
+memoryFragmentService.importData(jsonString);
+```
+
+---
+
+## 📊 统计数据
+
+### 代码统计
+
+**新增文件**:
+- `src/services/MemoryFragmentService.ts` - ~250 行
+- `src/types/memory.types.ts` - ~50 行
+
+**修改文件**:
+- `components/QuestionVomitMachine.tsx` - ~30 处修改
+- `src/services/memoryFragments.ts` - 22个碎片内容更新
+
+**总碎片数**: 22 个
+**章节数**: 3 个阶段 + 1 个最终章
+**里程碑**: 3 个（第7、14、21天）
+
+### 测试覆盖
+
+- ✅ 确定性触发测试
+- ✅ 数据迁移测试
+- ✅ Service 方法测试
+- ✅ 用户测试通过
+
+---
+
+## 📚 相关文档
+
+- ✅ `/workspace/PHASE2_COMPLETION_REPORT.md` - Phase 2 完成报告
+- ✅ `/workspace/PHASE2_STATUS_REPORT.md` - Phase 2 状态报告
+- ✅ `/workspace/V21_STORY_UPDATE_REPORT.md` - V-21 故事更新报告
+- ✅ `/workspace/TESTING_GUIDE_PHASE1.md` - 测试指南
+
+---
+
+## ✅ 完成清单
+
+### Phase 1: 数据结构优化
+- [x] 创建 TypeScript 类型定义
+- [x] 创建 MemoryFragmentService
+- [x] 实现数据迁移机制
+
+### Phase 2: 核心功能实施
+- [x] QuestionVomitMachine 集成
+- [x] 确定性触发机制
+- [x] 进度统计功能
+- [x] 查看次数统计
+- [x] 数据导入导出
+- [x] 编译验证
+- [x] 用户测试
+
+### 故事内容更新
+- [x] 更新所有 22 个碎片内容
+- [x] 更新 Markdown 文档
+- [x] 更新纯文本文档
+- [x] 编译验证
+
+### Phase 3: 记忆档案馆 UI (待实施)
+- [ ] 全屏 Modal 组件
+- [ ] 进度可视化
+- [ ] 章节卡片设计
+- [ ] 碎片重读功能
+- [ ] 动画效果
+
+---
+
+## 🚀 下次继续
+
+### 准备工作
+
+1. **阅读本文件** - 了解 Phase 2 完成内容
+2. **查看报告**:
+   - `PHASE2_COMPLETION_REPORT.md` - 详细完成内容
+   - `V21_STORY_UPDATE_REPORT.md` - 故事更新详情
+
+3. **测试当前功能**:
+   - 启动服务器: `npm run dev`
+   - 访问: http://localhost:3000/
+   - 测试碎片触发流程
+   - 验证 V-21 故事内容
+
+### 下一步任务
+
+**Phase 3: 记忆档案馆 UI**
+
+**第1步**: 设计记忆档案馆全屏 Modal
+- 确定入口位置
+- 设计布局结构
+- 定义交互逻辑
+
+**第2步**: 实现进度可视化
+- 进度条组件
+- 章节卡片
+- 统计信息
+
+**第3步**: 实现碎片重读
+- 碎片列表展示
+- 点击查看详情
+- 收藏功能
+
+**第4步**: 添加动画效果
+- 配合故事主题
+- 不同阶段不同效果
+
+**第5步**: 测试和优化
+- 用户测试
+- 性能优化
+- 细节打磨
+
+---
+
+*更新时间: 2026-03-01 19:10*
+*状态: Phase 2 已完成 ✅ | Phase 3 待开始 ⏸️*
+*下次继续: 记忆档案馆 UI 开发*
+
+---
+
+*"请继续思考。为了不变成我。" —— V-21*

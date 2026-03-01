@@ -3,6 +3,7 @@ import { ArrowLeft, X, Trash2, Activity, Trophy, LogIn, LogOut } from 'lucide-re
 import { generatePhilosophicalQuestion, saveAnsweredQuestion, clearAnsweredQuestions, getAnsweredQuestions } from '../src/services/question.service';
 import { QuestionData, User, Streak } from '../src/types';
 import { MemoryFragment, getRandomFragment, MEMORY_FRAGMENTS } from '../src/services/memoryFragments';
+import { memoryFragmentService } from '../src/services/MemoryFragmentService';
 import { PrologueScene } from './PrologueScene';
 import { playSound, switchBGM, type BGMType } from '../src/services/audio.service';
 import { AudioControl } from './AudioControl';
@@ -141,7 +142,7 @@ export const QuestionVomitMachine: React.FC = () => {
   // 记忆碎片相关状态
   const [showMemoryModal, setShowMemoryModal] = useState(false);
   const [currentMemoryFragment, setCurrentMemoryFragment] = useState<MemoryFragment | null>(null);
-  const [viewedFragmentIds, setViewedFragmentIds] = useState<string[]>([]);
+  // viewedFragmentIds 已删除，由 memoryFragmentService 管理
 
   // 解锁记忆碎片弹窗状态
   const [showUnlockModal, setShowUnlockModal] = useState(false);
@@ -483,6 +484,20 @@ export const QuestionVomitMachine: React.FC = () => {
     updateRobotLeftStatus();
   }, []);
 
+  // 监听跳转到历史页面的事件（当没有可用碎片时触发）
+  useEffect(() => {
+    const handleNavigateToHistory = () => {
+      console.log('[QuestionVomitMachine] 收到跳转到历史页面事件');
+      setView('history');
+    };
+
+    window.addEventListener('qvm-navigate-to-history', handleNavigateToHistory);
+
+    return () => {
+      window.removeEventListener('qvm-navigate-to-history', handleNavigateToHistory);
+    };
+  }, []);
+
   // 保存今日状态到 localStorage
   const saveTodayState = (question: QuestionData, rerolls: number) => {
     const today = new Date().toDateString();
@@ -495,57 +510,41 @@ export const QuestionVomitMachine: React.FC = () => {
 
   // ==================== 记忆碎片系统 ====================
 
-  // 保存已看过的碎片
+  // 保存已看过的碎片（增加查看次数）
   const saveViewedFragment = (fragmentId: string) => {
-    const newViewed = [...viewedFragmentIds, fragmentId];
-    setViewedFragmentIds(newViewed);
-    localStorage.setItem('qvm_viewed_fragments', JSON.stringify(newViewed));
+    // 新版本：使用 service 增加查看次数
+    memoryFragmentService.incrementViewCount(fragmentId);
+    console.log('[saveViewedFragment] 查看次数已增加:', fragmentId);
   };
 
   // 触发记忆碎片的函数 - 仅在保存答案后调用
-  const tryTriggerMemoryFragment = () => {
+  // 返回值：true=成功触发碎片，false=没有可用碎片
+  const tryTriggerMemoryFragment = (): boolean => {
     const currentDay = streakData.currentStreak;
-    console.log('🧩 尝试触发记忆碎片', { currentDay, viewedFragmentIds, totalFragments: MEMORY_FRAGMENTS.length });
+    console.log('🧩 尝试触发记忆碎片（新版本）', { currentDay });
 
-    // 21天必触发最终结局
-    if (currentDay >= 21) {
-      const finalFragment = MEMORY_FRAGMENTS.find(f => f.id === 'final');
-      if (finalFragment && !viewedFragmentIds.includes('final')) {
-        console.log('✨ 触发最终结局');
-        setCurrentMemoryFragment(finalFragment);
-        console.log('[tryTriggerMemoryFragment] 设置 showUnlockModal = true (final)');
-        // 使用 setTimeout 确保 state 更新按顺序执行
-        setTimeout(() => setShowUnlockModal(true), 0);
-        return;
-      }
-    }
+    // 使用新服务：按天顺序获取碎片
+    const fragment = memoryFragmentService.getFragmentForDay(currentDay);
 
-    // 里程碑天数必触发
-    const milestoneFragment = MEMORY_FRAGMENTS.find(
-      f => f.isMilestone && f.minDay === currentDay && !viewedFragmentIds.includes(f.id)
-    );
-    if (milestoneFragment) {
-      console.log('✨ 触发里程碑碎片', milestoneFragment.id);
-      setCurrentMemoryFragment(milestoneFragment);
-      console.log('[tryTriggerMemoryFragment] 设置 showUnlockModal = true (milestone)');
-      setTimeout(() => setShowUnlockModal(true), 0);
-      return;
-    }
-
-    // 随机触发一个当前章节的碎片
-    const fragment = getRandomFragment(currentDay, viewedFragmentIds);
     if (fragment) {
-      console.log('✨ 触发随机碎片', fragment.id, '内容:', fragment.content);
+      console.log('✨ 触发碎片（按天顺序）', fragment.id, '章节:', fragment.chapter, '内容:', fragment.content.substring(0, 30) + '...');
+
+      // 设置当前碎片
       setCurrentMemoryFragment(fragment);
-      console.log('[tryTriggerMemoryFragment] 设置 showUnlockModal = true (random)');
+
+      // 解锁碎片（保存到 service）
+      memoryFragmentService.unlockFragment(fragment, currentDay, 'random');
+
+      // 显示解锁弹窗
+      console.log('[tryTriggerMemoryFragment] 设置 showUnlockModal = true');
       setTimeout(() => setShowUnlockModal(true), 0);
+
+      return true;
     } else {
       console.log('⚠️ 没有可用的碎片');
-      console.log('可用碎片检查:', {
-        currentDay,
-        viewedFragmentIds,
-        allFragments: MEMORY_FRAGMENTS.map(f => ({ id: f.id, minDay: f.minDay, maxDay: f.maxDay, viewed: viewedFragmentIds.includes(f.id) }))
-      });
+      console.log('当前天数:', currentDay);
+      console.log('提示：所有碎片可能已解锁完毕');
+      return false;
     }
   };
 
@@ -555,23 +554,27 @@ export const QuestionVomitMachine: React.FC = () => {
     console.log('[handleUnlockMemory] currentMemoryFragment:', currentMemoryFragment);
     playSound('unlock'); // 播放解锁音效
 
+    // 先关闭所有弹窗（确保互斥）
+    setShowUnlockModal(false);
+    setShowCheckInModal(false);
+    console.log('[handleUnlockMemory] 已关闭所有其他弹窗');
+
     if (currentMemoryFragment) {
       saveViewedFragment(currentMemoryFragment.id);
       console.log('[handleUnlockMemory] 碎片内容:', currentMemoryFragment.content);
 
-      // 先关闭解锁弹窗，等待一小段时间再打开记忆碎片弹窗
-      // 这样确保两个弹窗不会同时渲染，避免 z-index 冲突
-      setShowUnlockModal(false);
-
-      console.log('[handleUnlockMemory] 等待 100ms 后显示记忆碎片弹窗');
+      console.log('[handleUnlockMemory] 等待 200ms 后显示记忆碎片弹窗');
       setTimeout(() => {
         console.log('[handleUnlockMemory] 设置 showMemoryModal = true');
         setShowMemoryModal(true);
         console.log('[handleUnlockMemory] showMemoryModal 已设置为 true');
-      }, 100); // 短暂延迟确保解锁弹窗完全卸载
+      }, 200); // 增加延迟确保解锁弹窗完全卸载
     } else {
-      console.error('[handleUnlockMemory] currentMemoryFragment 为空！');
-      setShowUnlockModal(false);
+      console.error('[handleUnlockMemory] currentMemoryFragment 为空！跳转到历史页面');
+      // 如果没有可用的碎片，跳转到历史页面
+      setTimeout(() => {
+        setView('history');
+      }, 100);
     }
   };
 
@@ -1239,36 +1242,39 @@ export const QuestionVomitMachine: React.FC = () => {
                   <div className="flex gap-2 flex-wrap">
                     <button
                       onClick={() => {
-                        const fragment = getRandomFragment(3, viewedFragmentIds);
-                        if (fragment) {
-                          setCurrentMemoryFragment(fragment);
-                          setShowUnlockModal(true);  // 先显示解锁弹窗
+                        const chapterFragments = memoryFragmentService.getChapterFragments(1);
+                        const unlockedFragment = chapterFragments.find(f => f.unlocked);
+                        if (unlockedFragment) {
+                          setCurrentMemoryFragment(unlockedFragment.fragment);
+                          setShowUnlockModal(true);
                         } else {
-                          alert('第1章碎片已全部看完，请清除记录');
+                          alert('第1章没有已解锁的碎片');
                         }
                       }}
                       className="px-2 py-1 bg-space-800/50 hover:bg-space-800 border border-space-600 text-amber-400/80 rounded"
                     >第1章</button>
                     <button
                       onClick={() => {
-                        const fragment = getRandomFragment(8, viewedFragmentIds);
-                        if (fragment) {
-                          setCurrentMemoryFragment(fragment);
-                          setShowUnlockModal(true);  // 先显示解锁弹窗
+                        const chapterFragments = memoryFragmentService.getChapterFragments(2);
+                        const unlockedFragment = chapterFragments.find(f => f.unlocked);
+                        if (unlockedFragment) {
+                          setCurrentMemoryFragment(unlockedFragment.fragment);
+                          setShowUnlockModal(true);
                         } else {
-                          alert('第2章碎片已全部看完，请清除记录');
+                          alert('第2章没有已解锁的碎片');
                         }
                       }}
                       className="px-2 py-1 bg-blue-900/50 hover:bg-blue-900/70 border border-blue-700/50 text-blue-200 rounded"
                     >第2章</button>
                     <button
                       onClick={() => {
-                        const fragment = getRandomFragment(16, viewedFragmentIds);
-                        if (fragment) {
-                          setCurrentMemoryFragment(fragment);
-                          setShowUnlockModal(true);  // 先显示解锁弹窗
+                        const chapterFragments = memoryFragmentService.getChapterFragments(3);
+                        const unlockedFragment = chapterFragments.find(f => f.unlocked);
+                        if (unlockedFragment) {
+                          setCurrentMemoryFragment(unlockedFragment.fragment);
+                          setShowUnlockModal(true);
                         } else {
-                          alert('第3章碎片已全部看完，请清除记录');
+                          alert('第3章没有已解锁的碎片');
                         }
                       }}
                       className="px-2 py-1 bg-purple-900/50 hover:bg-purple-900/70 border border-purple-700/50 text-purple-200 rounded"
@@ -1299,9 +1305,10 @@ export const QuestionVomitMachine: React.FC = () => {
                     >🎬 重播前言</button>
                     <button
                       onClick={() => {
-                        setViewedFragmentIds([]);
-                        localStorage.removeItem('qvm_viewed_fragments');
-                        alert('已清除碎片记录，可以重新观看');
+                        memoryFragmentService.clearAll();
+                        alert('已清除所有碎片记录，可以重新收集');
+                        // 重新渲染以更新状态
+                        window.location.reload();
                       }}
                       className="px-2 py-1 bg-space-700/50 hover:bg-space-700 border border-space-600 text-cyan-400/80 rounded"
                     >清除碎片记录</button>
@@ -1331,7 +1338,7 @@ export const QuestionVomitMachine: React.FC = () => {
 
                 <div className="mt-2 pt-2 border-t border-amber-400/20">
                   <p className="font-mono text-amber-400/70">
-                    当前状态: Day {streakData.currentStreak} | 已看碎片: {viewedFragmentIds.length} | 已答问题: {(() => { try { const a = JSON.parse(localStorage.getItem('qvm_answered_questions') || '[]'); return a.length; } catch { return 0; } })()}
+                    当前状态: Day {streakData.currentStreak} | 已解锁碎片: {memoryFragmentService.getProgress().unlocked} | 已答问题: {(() => { try { const a = JSON.parse(localStorage.getItem('qvm_answered_questions') || '[]'); return a.length; } catch { return 0; } })()}
                   </p>
                 </div>
               </div>

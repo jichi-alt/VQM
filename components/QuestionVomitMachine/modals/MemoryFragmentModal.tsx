@@ -44,8 +44,8 @@ export const MemoryFragmentModal = ({ isOpen, onClose, content, chapter, current
   const colors = chapterColors[chapter] || chapterColors[1];
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-500 scanlines perspective-1000">
-      <div className={`w-[360px] ${colors.bg} border-2 ${colors.border} ${colors.glow} shadow-2xl flex flex-col overflow-hidden hologram relative flip-in`} style={{ transformStyle: 'preserve-3d' }}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md animate-in fade-in duration-500 scanlines perspective-1000" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999 }}>
+      <div className={`w-[360px] ${colors.bg} border-2 ${colors.border} ${colors.glow} shadow-2xl flex flex-col overflow-hidden hologram relative flip-in`} style={{ transformStyle: 'preserve-3d', zIndex: 10000, position: 'relative' }}>
 
         {/* 动态光效边框 */}
         <div className="absolute inset-0 border-2 border-amber-400/20 rounded-lg animate-[borderPulse_2s_ease-in-out_infinite] pointer-events-none"></div>
