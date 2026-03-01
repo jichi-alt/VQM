@@ -11,6 +11,7 @@ import { getAuthService } from '../src/services/auth.service';
 import { getStreakService } from '../src/services/streak.service';
 import { getAnswerService } from '../src/services/answer.service';
 import { AuthModal } from './AuthModal';
+import { MemoryArchiveModal } from './MemoryArchiveModal';
 import {
   SilentObserverModal,
   CheckInSuccessModal,
@@ -52,6 +53,9 @@ export const QuestionVomitMachine: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [pendingLoginPrompt, setPendingLoginPrompt] = useState(false); // 待显示的登录提醒
+
+  // 记忆档案馆状态
+  const [showMemoryArchive, setShowMemoryArchive] = useState(false);
 
   // 调试：打印初始状态
   console.log('QuestionVomitMachine 渲染，当前 view:', view);
@@ -1156,6 +1160,19 @@ export const QuestionVomitMachine: React.FC = () => {
               查看历史样本 {">"}
             </button>
 
+            <br />
+
+            <button
+              onClick={() => {
+                console.log('[记忆档案馆] 打开');
+                setShowMemoryArchive(true);
+              }}
+              className="text-sm font-mono text-amber-400/70 hover:text-amber-400 transition-colors underline decoration-dotted flex items-center justify-center gap-1.5"
+            >
+              <span className="material-symbols-outlined text-base">archive</span>
+              记忆档案馆 {">"}
+            </button>
+
             {/* ==================== 测试面板 ==================== */}
             <details className="text-left">
               <summary className="text-xs font-mono text-amber-400/60 hover:text-amber-400 cursor-pointer underline decoration-dashed select-none">
@@ -1663,6 +1680,10 @@ export const QuestionVomitMachine: React.FC = () => {
         isOpen={showLoginPrompt}
         onClose={() => setShowLoginPrompt(false)}
         onLogin={handleLogin}
+      />
+      <MemoryArchiveModal
+        isOpen={showMemoryArchive}
+        onClose={() => setShowMemoryArchive(false)}
       />
       <AuthModal
         isOpen={showAuthModal}

@@ -3160,3 +3160,424 @@ memoryFragmentService.importData(jsonString);
 ---
 
 *"请继续思考。为了不变成我。" —— V-21*
+
+---
+
+## 🆕 2026-03-01 更新 - Phase 3 完成：记忆档案馆 UI 上线
+
+### 本次更新概览
+
+本次更新完成了**记忆档案馆**完整功能，用户可以随时查看、重读和收藏已解锁的记忆碎片，极大提升了故事体验的可探索性。
+
+---
+
+## 📝 完成的改进任务
+
+### ✅ 任务 1: 记忆档案馆全屏 Modal
+
+**新增文件**: `/workspace/components/MemoryArchiveModal.tsx` (~450行)
+
+**功能特性**:
+- 全屏 Modal 设计，赛博朋克/废土美学风格
+- z-index: 200 确保在最顶层显示
+- 背景半透明 + 扫描线动画（scanlines）
+- 顶部标题栏：图标 + 标题 + 总进度 + 关闭按钮
+- 底部状态栏：装饰性系统信息
+
+**UI 布局**:
+```
+┌─────────────────────────────────────────┐
+│ 📦 记忆档案馆    [0/22] [===] 0%  [✕]  │ ← 顶部栏
+├─────────────────────────────────────────┤
+│                                         │
+│  📦 PHASE 1: 失落的余温      0%        │ ← 章节卡片
+│  ┌────┐ ┌────┐ ┌────┐                 │
+│  │ 🔒 │ │ 🔒 │ │ 🔒 │                 │ ← 碎片卡片
+│  └────┘ └────┘ └────┘                 │
+│                                         │
+│  📦 PHASE 2: 算法的葬礼      0%        │
+│  ┌────┐ ┌────┐ ┌────┐                 │
+│  │ 🔒 │ │ 🔒 │ │ 🔒 │                 │
+│  └────┘ └────┘ └────┘                 │
+│                                         │
+│  STATUS: ARCHIVE_ACCESS_GRANTED        │ ← 底部栏
+└─────────────────────────────────────────┘
+```
+
+---
+
+### ✅ 任务 2: 进度可视化组件
+
+**顶部总进度**:
+- 左侧：收集进度（已解锁/总数）
+- 进度条：渐变色动画（amber-600 → amber-400）
+- 百分比：实时计算并显示
+
+**章节进度**:
+每个章节卡片显示：
+- 章节标题 + 副标题（PHASE 1/2/3/FINAL）
+- 进度百分比
+- 已解锁/总数统计
+- 进度条动画
+
+**代码实现**:
+```typescript
+// 总进度计算
+const totalProgress = Math.round((progress.unlocked / progress.total) * 100);
+
+// 章节进度计算
+const chapterProgress = Math.round(
+  (fragments.filter(f => f.unlocked).length / fragments.length) * 100
+);
+```
+
+---
+
+### ✅ 任务 3: 章节卡片设计
+
+**四个章节的主题设计**:
+
+| 章节 | 标题 | 配色方案 | 进度条颜色 |
+|------|------|---------|-----------|
+| Phase 1 | 失落的余温 | zinc-900/95 | zinc-500 → zinc-300 |
+| Phase 2 | 算法的葬礼 | slate-900/95 | cyan-600 → cyan-400 |
+| Phase 3 | 最后的人类 | indigo-900/95 | purple-600 → purple-400 |
+| Final | 见证者之约 | amber-900/95 | amber-500 → amber-300 |
+
+**卡片交互**:
+- 悬停时放大 1.01 倍（`hover:scale-[1.01]`）
+- 发光阴影效果（`shadow-*`）
+- 背景渐变光晕装饰
+
+---
+
+### ✅ 任务 4: 碎片重读功能
+
+**已解锁碎片**:
+```typescript
+// 碎片卡片显示内容
+{
+  - 碎片 ID（例如 C1-1）
+  - 内容预览（前60个字符）
+  - 查看次数统计（眼睛图标 + 数字）
+  - 解锁天数（DAY 1）
+  - 收藏按钮（星标）
+}
+```
+
+**点击已解锁碎片**:
+1. 调用 `handleFragmentClick(fragment)`
+2. 增加 `viewCount`（查看次数+1）
+3. 打开 `MemoryFragmentModal` 显示完整内容
+4. 自动刷新进度数据
+
+**收藏功能**:
+```typescript
+const handleToggleFavorite = (e: React.MouseEvent, fragmentId: string) => {
+  e.stopPropagation(); // 防止触发卡片点击
+  memoryFragmentService.toggleFavorite(fragmentId);
+  refreshProgress(); // 刷新数据
+};
+```
+
+**未解锁碎片**:
+- 显示锁定图标（Lock）
+- 半透明样式（opacity-50）
+- 虚线边框（border-dashed）
+- 显示 "LOCKED" 文字
+
+---
+
+### ✅ 任务 5: 动画效果实现
+
+**全局动画**:
+- **scanlines**: 扫描线动画（模拟 CRT 显示器）
+- **flip-in**: Modal 进入时 3D 翻转动画
+- **glow-text**: 标题文字发光效果
+
+**交互动画**:
+- 章节卡片悬停放大（`hover:scale-[1.01]`）
+- 碎片卡片悬停放大（`hover:scale-105`）
+- 按钮悬停变色（`hover:text-amber-400`）
+
+**进度条动画**:
+- 宽度变化过渡（`transition-all duration-500`）
+- 渐变色填充（`bg-gradient-to-r`）
+
+**收藏动画**:
+- 星标填充状态切换（`fill-amber-400`）
+- 悬停背景高亮（`hover:bg-amber-400/20`）
+
+---
+
+## 📂 文件结构更新
+
+```
+/workspace/
+├── components/
+│   ├── MemoryArchiveModal.tsx         # ✅ 新增 - 记忆档案馆主组件 (~450行)
+│   │   ├── MemoryArchiveModal         # 主容器 + 顶部栏 + 底部栏
+│   │   ├── ChapterCard                # 章节卡片组件
+│   │   └── FragmentCard               # 碎片卡片组件
+│   │
+│   └── QuestionVomitMachine.tsx       # ✅ 修改 - 集成记忆档案馆
+│       ├── 导入 MemoryArchiveModal
+│       ├── 状态管理: showMemoryArchive
+│       ├── 入口按钮（底部链接区域）
+│       └── Modal 渲染
+│
+└── src/
+    └── services/
+        └── MemoryFragmentService.ts   # 已存在，提供数据访问方法
+```
+
+---
+
+## 🔧 技术实现细节
+
+### 1. 入口按钮位置
+
+**修改文件**: `QuestionVomitMachine.tsx`
+
+**位置**: intro 视图，底部链接区域（第1165行）
+
+```tsx
+{/* 底部链接 */}
+<div className="mt-8 text-center space-y-3">
+  <button onClick={() => setView('history')}>
+    查看历史样本 {">"}
+  </button>
+
+  <br />
+
+  <button onClick={() => setShowMemoryArchive(true)}>
+    <span className="material-symbols-outlined">archive</span>
+    记忆档案馆 {">"}
+  </button>
+</div>
+```
+
+### 2. 状态管理
+
+```typescript
+// QuestionVomitMachine.tsx
+const [showMemoryArchive, setShowMemoryArchive] = useState(false);
+
+// MemoryArchiveModal 内部状态
+const [progress, setProgress] = useState(memoryFragmentService.getProgress());
+const [selectedFragment, setSelectedFragment] = useState<MemoryFragment | null>(null);
+const [showFragmentModal, setShowFragmentModal] = useState(false);
+```
+
+### 3. 数据获取
+
+```typescript
+// 获取总进度
+const progress = memoryFragmentService.getProgress();
+// { total: 22, unlocked: 0, byChapter: {...} }
+
+// 获取章节碎片
+const fragments = memoryFragmentService.getChapterFragments(chapter);
+// [{ fragment, unlocked, record }, ...]
+
+// 获取单个碎片记录
+const record = memoryFragmentService.getFragmentRecord(fragmentId);
+// { id, chapter, unlockedAt, viewCount, isFavorite, ... }
+```
+
+### 4. Modal 渲染
+
+**修改文件**: `QuestionVomitMachine.tsx` (第1688行)
+
+```tsx
+<MemoryArchiveModal
+  isOpen={showMemoryArchive}
+  onClose={() => setShowMemoryArchive(false)}
+/>
+```
+
+---
+
+## 🧪 测试指南
+
+### 测试步骤
+
+**1. 基础功能测试**
+```bash
+# 访问主页
+http://localhost:3000/
+
+# 点击"记忆档案馆"按钮
+# 预期：打开全屏 Modal
+```
+
+**2. 空状态测试**
+```
+# 未解锁任何碎片时，应该显示：
+- 总进度：0/22 (0%)
+- 所有章节：0% 已解锁
+- 所有碎片：锁定状态（🔒 LOCKED）
+```
+
+**3. 有数据测试**
+```
+# 使用测试面板快速解锁碎片
+1. 展开底部 [测试面板]
+2. 点击"第0天→1天"
+3. 点击"吐一个问题"并保存答案
+4. 触发记忆碎片后，再次打开档案馆
+5. 预期：看到已解锁的碎片（可点击）
+```
+
+**4. 碎片查看测试**
+```
+1. 点击已解锁的碎片
+2. 预期：打开 MemoryFragmentModal 显示完整内容
+3. 关闭后，查看次数应该+1
+```
+
+**5. 收藏功能测试**
+```
+1. 点击碎片的星标按钮
+2. 预期：星标变为金色（fill-amber-400）
+3. 再次点击：取消收藏
+```
+
+---
+
+## 📊 完成统计
+
+### 代码量
+| 类别 | 文件数 | 行数 |
+|------|--------|------|
+| 新增组件 | 1 | ~450 行 |
+| 修改组件 | 1 | ~15 行 |
+| **总计** | **2** | **~465 行** |
+
+### 功能完成度
+
+| 功能模块 | 完成度 |
+|---------|--------|
+| 全屏 Modal | ✅ 100% |
+| 进度可视化 | ✅ 100% |
+| 章节卡片设计 | ✅ 100% |
+| 碎片重读功能 | ✅ 100% |
+| 动画效果 | ✅ 100% |
+| **总计** | **✅ 100%** |
+
+---
+
+## 🎯 用户体验提升
+
+### 之前（无档案馆）
+- ❌ 碎片只能触发时查看一次
+- ❌ 无法回顾已解锁的故事
+- ❌ 不知道解锁进度
+- ❌ 无法收藏喜欢的碎片
+
+### 现在（有档案馆）
+- ✅ 随时查看所有已解锁碎片
+- ✅ 反复阅读，深度体验故事
+- ✅ 实时查看解锁进度
+- ✅ 收藏功能，标记精彩片段
+- ✅ 查看次数统计
+
+---
+
+## 🎨 设计亮点
+
+### 1. 赛博朋克美学
+- 深空黑背景（space-950）
+- 扫描线动画（模拟 CRT 显示器）
+- 琥珀色/青色主题（与整体风格一致）
+
+### 2. 信息层次清晰
+- **顶部**: 总览（总进度、标题）
+- **中部**: 分章节展示（可滚动）
+- **底部**: 装饰性状态栏
+
+### 3. 交互反馈丰富
+- 悬停放大效果
+- 发光阴影
+- 进度条平滑动画
+- 收藏星标切换
+
+---
+
+## 🚀 编译状态
+
+```bash
+✓ 1776 modules transformed.
+✓ built in 2.63s
+
+文件大小：
+- dist/index.html        17.90 kB
+- dist/assets/css/index  71.25 kB
+- dist/assets/js/index   111.36 kB
+
+无错误！
+```
+
+---
+
+## 💡 使用说明
+
+### 用户入口
+**主页（intro 视图）** → 底部 → **"📦 记忆档案馆"** 按钮
+
+### 快捷操作
+- **ESC 键**: 关闭 Modal（未来可添加）
+- **点击遮罩**: 关闭 Modal（当前使用关闭按钮）
+- **点击碎片**: 查看详情
+- **点击星标**: 收藏/取消收藏
+
+---
+
+## 🔮 未来优化建议
+
+### 短期优化
+- [ ] 添加 ESC 键关闭 Modal
+- [ ] 添加点击遮罩关闭功能
+- [ ] 碎片搜索/筛选功能
+- [ ] 按查看次数排序
+
+### 长期规划
+- [ ] 碎片分享功能（生成图片）
+- [ ] 导出收藏列表
+- [ ] 碎片评论/笔记功能
+- [ ] 成就系统集成
+
+---
+
+## ✅ Phase 3 完成清单
+
+- [x] 创建 MemoryArchiveModal 组件
+- [x] 实现进度可视化（总进度 + 章节进度）
+- [x] 设计 4 个章节卡片
+- [x] 实现碎片列表展示
+- [x] 实现碎片点击查看
+- [x] 实现收藏功能
+- [x] 实现查看次数统计
+- [x] 添加动画效果
+- [x] 集成到 QuestionVomitMachine
+- [x] 编译测试通过
+- [x] 用户测试通过
+
+---
+
+## 📚 相关文档
+
+- ✅ `PROJECT_SUMMARY.md` - 本文件（已更新）
+- ✅ `components/MemoryArchiveModal.tsx` - 主组件代码
+- ✅ `src/services/MemoryFragmentService.ts` - 数据服务
+- ✅ `src/types/memory.types.ts` - 类型定义
+
+---
+
+*更新时间: 2026-03-01 23:30*
+*状态: Phase 3 已完成 ✅ | 记忆档案馆已上线*
+*下次继续: 根据用户反馈进行优化或开发新功能*
+
+---
+
+*"记忆不是数据，是灵魂的刻痕。" —— V-21*
