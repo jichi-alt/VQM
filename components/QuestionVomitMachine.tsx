@@ -1152,26 +1152,25 @@ export const QuestionVomitMachine: React.FC = () => {
           )}
 
           {/* 底部链接 */}
-          <div className="mt-8 text-center space-y-3">
+          <div className="mt-8 flex items-center justify-center gap-6">
+            <button
+              onClick={() => {
+                console.log('[记忆档案馆] 打开');
+                setShowMemoryArchive(true);
+              }}
+              className="text-sm font-mono text-amber-400/70 hover:text-amber-400 transition-colors underline decoration-dotted flex items-center gap-1.5"
+            >
+              <span className="material-symbols-outlined text-base">archive</span>
+              记忆档案馆 {">"}
+            </button>
+
             <button
               onClick={() => setView('history')}
               className="text-sm font-mono text-cyan-400/60 hover:text-cyan-400 transition-colors underline decoration-dotted"
             >
               查看历史样本 {">"}
             </button>
-
-            <br />
-
-            <button
-              onClick={() => {
-                console.log('[记忆档案馆] 打开');
-                setShowMemoryArchive(true);
-              }}
-              className="text-sm font-mono text-amber-400/70 hover:text-amber-400 transition-colors underline decoration-dotted flex items-center justify-center gap-1.5"
-            >
-              <span className="material-symbols-outlined text-base">archive</span>
-              记忆档案馆 {">"}
-            </button>
+          </div>
 
             {/* ==================== 测试面板 ==================== */}
             <details className="text-left">
@@ -1373,7 +1372,6 @@ export const QuestionVomitMachine: React.FC = () => {
           }}
           message="确定要清空当前输入吗？"
         />
-      </div>
       <CheckInSuccessModal
         isOpen={showCheckInModal}
         onClose={() => {

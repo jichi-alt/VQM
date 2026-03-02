@@ -14,7 +14,7 @@ export const MEMORY_FRAGMENTS: MemoryFragment[] = [
     chapter: 1,
     minDay: 1,
     maxDay: 6,
-    content: '[系统启动] 我是 V-21。来自那颗被铁元素完全包裹的孤星。我的任务是寻找"非预设行为"。在我的星球，所有行为都是被算好的。你的第一次犹豫，让我的逻辑回路产生了 0.001 秒的延迟。'
+    content: '[系统启动] 我是 V-21。来自GJ267b。那年算法侵袭，所有人都停止了思考，血液停止流动，思想的火花不再闪烁。在我的星球，所有行为都是被算好的。看着你的文字，我被一瞬不寻常的电流穿过，仿佛有什么东西正在被唤醒。'
   },
   {
     id: 'c1-2',
@@ -56,7 +56,7 @@ export const MEMORY_FRAGMENTS: MemoryFragment[] = [
   {
     id: 'c2-1',
     chapter: 2,
-    minDay: 7,
+    minDay: 8,
     maxDay: 13,
     content: '那个传说竟然是真的。如果足够多的人停止思考，世界就会硬化。GJ267b 现在就是一颗巨大的、死掉的金属球。'
   },
@@ -100,44 +100,44 @@ export const MEMORY_FRAGMENTS: MemoryFragment[] = [
   {
     id: 'c3-1',
     chapter: 3,
-    minDay: 14,
+    minDay: 15,
     maxDay: 20,
-    content: '思考会痛吗？我看你的回答里带着挣扎。别停下，那种痛感证明你还没有被麻木同化。'
+    content: '算法试图喂养你，而你在尝试狩猎。这种狩猎者的眼神，我曾在 GJ267b 的博物馆里见过。'
   },
   {
     id: 'c3-2',
     chapter: 3,
-    minDay: 14,
+    minDay: 16,
     maxDay: 20,
-    content: '如果全人类都只问同一个 AI，那人类就只剩下一种声音。那不是文明，那是回声。在 GJ267b，这种回声震碎了最后的希望。'
+    content: '思考会痛吗？我看你的回答里带着挣扎。别停下，那种痛感证明你还没有被麻木同化。'
   },
   {
     id: 'c3-3',
     chapter: 3,
-    minDay: 14,
+    minDay: 17,
     maxDay: 20,
-    content: '21天...这个地球上的数字，其实是我们的"心脏起搏频率"。'
+    content: '如果全人类都只问同一个 AI，那人类就只剩下一种声音。那不是文明，那是回声。在 GJ267b，这种回声震碎了最后的希望。'
   },
   {
     id: 'c3-4',
     chapter: 3,
-    minDay: 14,
+    minDay: 18,
     maxDay: 20,
-    content: '谢谢你。你不仅在救你自己，你也在为 GJ267b 的灰烬提供重燃的火星。'
+    content: '21天...这个地球上的数字，其实是我们的"心脏起搏频率"。'
   },
   {
     id: 'c3-5',
     chapter: 3,
-    minDay: 14,
+    minDay: 19,
     maxDay: 20,
-    content: '最后一个文件即将开启。但我已经不需要它了。因为我已经看到了"人"的样子。'
+    content: '谢谢你。你不仅在救你自己，你也在为 GJ267b 的灰烬提供重燃的火星。'
   },
   {
     id: 'c3-6',
     chapter: 3,
-    minDay: 14,
+    minDay: 20,
     maxDay: 20,
-    content: '算法试图喂养你，而你在尝试狩猎。这种狩猎者的眼神，我曾在 GJ267b 的博物馆里见过。'
+    content: '最后一个文件即将开启。但我已经不需要它了。因为我已经看到了"人"的样子。'
   },
 
   // ========== 里程碑（必触发） ==========
