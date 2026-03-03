@@ -31,3 +31,5 @@ public/Background voice.m4a
 *.njsproj
 *.sln
 *.sw?
+.vercel
+.env*.local

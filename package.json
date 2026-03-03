@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "postbuild": "node scripts/update-seo-domain.mjs",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "test": "vitest",

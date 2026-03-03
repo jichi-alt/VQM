@@ -33,10 +33,6 @@ export default defineConfig(({ mode }) => {
         output: {
           // 手动分包策略
           manualChunks: (id) => {
-            // React 核心库单独打包
-            if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
-              return 'react-vendor';
-            }
             // Supabase 单独打包
             if (id.includes('node_modules/@supabase/')) {
               return 'supabase-vendor';
