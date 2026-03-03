@@ -3,8 +3,8 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { getStreakService } from '../../src/services/streak.service';
-import type { StreakData } from '../../src/types';
+import { getStreakService } from '../../../src/services/streak.service';
+import type { StreakData } from '../../../src/types';
 
 export const useStreak = (userId?: string) => {
   const [streakData, setStreakData] = useState<StreakData>({
@@ -42,12 +42,10 @@ export const useStreak = (userId?: string) => {
   // 执行打卡
   const checkIn = useCallback(async () => {
     const streakService = getStreakService();
-    if (!userId) return null;
-
-    const result = await streakService.checkIn(userId);
+    const result = await streakService.checkIn(userId as any);
     if (result) {
       // 重新加载数据
-      const data = await streakService.getStreak(userId);
+      const data = await streakService.getStreak(userId as any);
       if (data) {
         setStreakData(data);
       }

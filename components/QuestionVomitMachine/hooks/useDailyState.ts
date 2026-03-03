@@ -3,8 +3,8 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { localStorage, LocalStorageKeys } from '../../src/lib/localStorage';
-import type { DailyState } from '../../src/types';
+import { localStorage, LocalStorageKeys } from '../../../src/lib/localStorage';
+import type { DailyState } from '../../../src/types';
 
 const createEmptyDailyState = (): DailyState => ({
   date: new Date().toISOString().split('T')[0],

@@ -60,6 +60,7 @@ export const QuestionVomitMachine: React.FC = () => {
   // 调试：打印初始状态
   console.log('QuestionVomitMachine 渲染，当前 view:', view);
   console.log('是否看过前言:', hasSeenPrologue);
+  const enableDebug = import.meta.env.DEV || (import.meta.env.VITE_ENABLE_DEBUG_PANEL === 'true');
 
   // 监听全局用户交互来初始化音频
   useEffect(() => {
@@ -474,15 +475,7 @@ export const QuestionVomitMachine: React.FC = () => {
     // 临时：在控制台显示 streak 数据（方便验证）
     console.log('🔥 Streak Data 初始化完成:', loadStreakData());
 
-    // 加载已看过的记忆碎片
-    try {
-      const saved = localStorage.getItem('qvm_viewed_fragments');
-      if (saved) {
-        setViewedFragmentIds(JSON.parse(saved));
-      }
-    } catch (error) {
-      console.error('Failed to load viewed fragments:', error);
-    }
+    // 记忆碎片查看次数由 memoryFragmentService 管理，无需加载旧版 viewedFragmentIds
 
     // 检查机器人是否已离开
     updateRobotLeftStatus();
@@ -758,8 +751,8 @@ export const QuestionVomitMachine: React.FC = () => {
       setLastSavedTime(formatTime(newAnswer.timestamp));
 
       // 记录已回答的问题
-      if (currentQuestion?.text) {
-        saveAnsweredQuestion(currentQuestion.text);
+      if (currentQuestion?.id && currentQuestion?.text) {
+        saveAnsweredQuestion(currentQuestion.id, currentQuestion.text);
       }
 
       console.log('本地保存成功！');
@@ -1173,12 +1166,101 @@ export const QuestionVomitMachine: React.FC = () => {
           </div>
 
             {/* ==================== 测试面板 ==================== */}
+            {enableDebug && (
             <details className="text-left">
               <summary className="text-xs font-mono text-amber-400/60 hover:text-amber-400 cursor-pointer underline decoration-dashed select-none">
                 [测试面板] 点击展开调试选项
               </summary>
               <div className="mt-3 p-3 bg-space-850/80 backdrop-blur-sm border border-amber-400/20 rounded text-xs space-y-2 hologram">
                 <p className="font-bold text-amber-400 mb-2">🎮 记忆碎片测试工具</p>
+
+                {/* 快速设置任意天数（1~21） */}
+                <div className="space-y-1 mb-3">
+                  <p className="font-mono text-cyan-400/80">快速设置任意天数（1~21）：</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {Array.from({ length: 21 }, (_, i) => i + 1).map((d) => (
+                      <button
+                        key={`set-day-${d}`}
+                        onClick={() => {
+                          const yesterday = new Date();
+                          yesterday.setDate(yesterday.getDate() - 1);
+                          const historyLen = Math.max(d - 1, 0);
+                          const history = Array(historyLen).fill(0).map((_, idx) => {
+                            const t = new Date();
+                            t.setDate(t.getDate() - (historyLen - idx));
+                            return t.toISOString().split('T')[0];
+                          });
+                          const newData = {
+                            ...streakData,
+                            currentStreak: Math.max(d - 1, 0),
+                            lastCheckIn: historyLen > 0 ? history[history.length - 1] : yesterday.toISOString().split('T')[0],
+                            checkInHistory: historyLen > 0 ? history : [yesterday.toISOString().split('T')[0]]
+                          };
+                          saveStreakData(newData);
+                          setStreakData(newData);
+                        }}
+                        className="px-2 py-1 bg-space-700/50 hover:bg-space-700 border border-space-600 text-cyan-400 rounded"
+                      >Day {d}</button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 预览/强制解锁指定天数的碎片 */}
+                <div className="space-y-1 mb-3">
+                  <p className="font-mono text-cyan-400/80">预览/解锁指定天数碎片：</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {Array.from({ length: 21 }, (_, i) => i + 1).map((d) => (
+                      <button
+                        key={`unlock-day-${d}`}
+                        onClick={() => {
+                          const frag = memoryFragmentService.getFragmentForDay(d);
+                          if (frag) {
+                            setCurrentMemoryFragment(frag);
+                            // 直接走解锁流程，查看完整UI
+                            memoryFragmentService.unlockFragment(
+                              frag,
+                              d,
+                              frag.id === 'final' ? 'final' : (frag.isMilestone ? 'milestone' : 'random')
+                            );
+                            setShowUnlockModal(true);
+                          } else {
+                            alert(`第${d}天没有可解锁碎片或已全部解锁`);
+                          }
+                        }}
+                        className="px-2 py-1 bg-space-800/50 hover:bg-space-800 border border-space-600 text-amber-400/80 rounded"
+                      >解锁 Day {d}</button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 每日碎片解锁状态总览 */}
+                {(() => {
+                  const MAP: Record<number, string> = {
+                    1: 'c1-1', 2: 'c1-2', 3: 'c1-3', 4: 'c1-4', 5: 'c1-5', 6: 'c1-6',
+                    7: 'milestone-7',
+                    8: 'c2-1', 9: 'c2-2', 10: 'c2-3', 11: 'c2-4', 12: 'c2-5', 13: 'c2-6',
+                    14: 'milestone-14',
+                    15: 'c3-1', 16: 'c3-2', 17: 'c3-3', 18: 'c3-4', 19: 'c3-5', 20: 'c3-6',
+                    21: 'final'
+                  };
+                  const storage = memoryFragmentService.getStorage();
+                  return (
+                    <div className="space-y-1 mb-3">
+                      <p className="font-mono text-cyan-400/80">每日碎片解锁状态：</p>
+                      <div className="flex gap-2 flex-wrap">
+                        {Array.from({ length: 21 }, (_, i) => i + 1).map((d) => {
+                          const id = MAP[d];
+                          const unlocked = !!(id && storage.fragments[id]);
+                          return (
+                            <span key={`status-day-${d}`} className={`px-2 py-1 text-xs rounded border ${unlocked ? 'border-amber-400 text-amber-300 bg-amber-400/10' : 'border-space-600 text-cyan-400 bg-space-800/30'}`}>
+                              Day {d}: {unlocked ? '已解锁' : '未解锁'}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* 设置打卡天数 */}
                 <div className="space-y-1 mb-3">
@@ -1358,7 +1440,7 @@ export const QuestionVomitMachine: React.FC = () => {
                   </p>
                 </div>
               </div>
-            </details>
+            </details>)}
           </div>
           </div>
         </div>
@@ -1393,6 +1475,10 @@ export const QuestionVomitMachine: React.FC = () => {
         content={currentMemoryFragment?.content || ''}
         chapter={currentMemoryFragment?.chapter || 1}
         currentDay={streakData.currentStreak}
+      />
+      <MemoryArchiveModal
+        isOpen={showMemoryArchive}
+        onClose={() => setShowMemoryArchive(false)}
       />
       <AuthModal
         isOpen={showAuthModal}

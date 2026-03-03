@@ -191,32 +191,24 @@ export const CheckInSuccessModal = ({ isOpen, onClose, onUnlock, day, isComplete
               console.log('[CheckInSuccessModal] 点击继续按钮');
               onClose();
               console.log('[CheckInSuccessModal] onClose 已调用，准备触发 onUnlock');
+              try {
+                console.log('[CheckInSuccessModal] 调用 onUnlock');
+                const hasFragment = onUnlock();
+                setHasUnlockedFragment(hasFragment);
 
-              // 调用 onUnlock 来尝试触发记忆碎片
-              // onUnlock 函数会返回是否有可用的碎片
-              setTimeout(() => {
-                try {
-                  console.log('[CheckInSuccessModal] 调用 onUnlock');
-                  const hasFragment = onUnlock();
-                  setHasUnlockedFragment(hasFragment);
-
-                  // 如果没有可用碎片，1秒后自动跳转到历史页面
-                  if (!hasFragment) {
-                    console.log('[CheckInSuccessModal] 没有可用碎片，准备跳转');
-                    setTimeout(() => {
-                      console.log('[CheckInSuccessModal] 触发跳转到历史页面事件');
-                      // 触发一个自定义事件，让主组件知道要跳转
-                      window.dispatchEvent(new CustomEvent('qvm-navigate-to-history'));
-                    }, 1000);
-                  }
-                } catch (error) {
-                  console.error('[CheckInSuccessModal] onUnlock 调用失败:', error);
-                  // 出错时也跳转到历史页面
+                if (!hasFragment) {
+                  console.log('[CheckInSuccessModal] 没有可用碎片，准备跳转');
                   setTimeout(() => {
+                    console.log('[CheckInSuccessModal] 触发跳转到历史页面事件');
                     window.dispatchEvent(new CustomEvent('qvm-navigate-to-history'));
                   }, 1000);
                 }
-              }, 300); // 稍微延迟，确保打卡弹窗先关闭
+              } catch (error) {
+                console.error('[CheckInSuccessModal] onUnlock 调用失败:', error);
+                setTimeout(() => {
+                  window.dispatchEvent(new CustomEvent('qvm-navigate-to-history'));
+                }, 1000);
+              }
             }}
             className={`w-full bg-space-800 hover:bg-space-700 text-amber-100 border border-amber-400/30 font-bold py-3 px-4 hover:border-amber-400/50 transition-all flex items-center justify-center gap-2 btn-3d btn-glow relative ${
               showButton ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
