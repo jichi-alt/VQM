@@ -18,6 +18,9 @@ dist-ssr
 .env.production
 .env.*.local
 
+# 忽略本地背景音频文件（不参与版本控制）
+public/Background voice.m4a
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
