@@ -10,8 +10,8 @@ export const RobotFace: React.FC<RobotFaceProps> = ({ isVomiting = false }) => {
       <h3 className="text-black font-black text-2xl mb-6 tracking-widest uppercase font-display">问题呕吐机</h3>
       
       <div className={`mb-8 relative group cursor-pointer transition-transform duration-300 ${isVomiting ? 'animate-shake' : 'hover:scale-105'}`}>
-        <div className="w-48 h-48 bg-border-dark relative flex items-center justify-center border-4 border-transparent hover:border-primary transition-colors duration-0">
-          <div className="w-40 h-32 bg-background-light border-2 border-dashed border-primary/50 relative overflow-hidden flex flex-col items-center justify-center p-2">
+        <div className="w-48 h-48 bg-border-dark relative flex items-center justify-center border-4 border-zinc-500/30 hover:border-primary transition-colors duration-0">
+          <div className="w-40 h-32 bg-background-light border-2 border-dashed border-primary/70 relative overflow-hidden flex flex-col items-center justify-center p-2">
             {/* Scanline inside face */}
             <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0),rgba(255,255,255,0)_50%,rgba(0,0,0,0.1)_50%,rgba(0,0,0,0.1))] bg-[length:100%_4px] opacity-20 pointer-events-none"></div>
             
@@ -26,9 +26,9 @@ export const RobotFace: React.FC<RobotFaceProps> = ({ isVomiting = false }) => {
             
             {/* Mouth */}
             <div 
-                className={`bg-border-dark mt-2 transition-all duration-100 ease-linear ${isVomiting ? 'h-12 w-20' : 'h-1 w-16'}`}
+                className={`bg-zinc-800 mt-2 transition-all duration-100 ease-linear ${isVomiting ? 'h-12 w-20' : 'h-1.5 w-16'}`}
             >
-                {isVomiting && <div className="w-full h-full bg-black/80 animate-pulse"></div>}
+                {isVomiting && <div className="w-full h-full bg-black animate-pulse"></div>}
             </div>
             
             {/* Chin details */}

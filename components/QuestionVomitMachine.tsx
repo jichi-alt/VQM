@@ -159,6 +159,18 @@ export const QuestionVomitMachine: React.FC = () => {
 
   // 预设问题总数（来自 geminiService.ts）
   const TOTAL_FALLBACK_QUESTIONS = 47; // 12 + 14 + 14 + 7
+  const DAY_FRAGMENT_MAP: Record<number, string> = {
+    1: 'c1-1', 2: 'c1-2', 3: 'c1-3', 4: 'c1-4', 5: 'c1-5', 6: 'c1-6',
+    7: 'milestone-7',
+    8: 'c2-1', 9: 'c2-2', 10: 'c2-3', 11: 'c2-4', 12: 'c2-5', 13: 'c2-6',
+    14: 'milestone-14',
+    15: 'c3-1', 16: 'c3-2', 17: 'c3-3', 18: 'c3-4', 19: 'c3-5', 20: 'c3-6',
+    21: 'final'
+  };
+  const getMappedFragmentForDay = (day: number) => {
+    const id = DAY_FRAGMENT_MAP[day];
+    return id ? MEMORY_FRAGMENTS.find(f => f.id === id) || null : null;
+  };
 
   // 检查是否所有预设问题都被抽取过了
   const checkAllQuestionsAnswered = (): boolean => {
@@ -1032,7 +1044,7 @@ export const QuestionVomitMachine: React.FC = () => {
               // ========== 机器人还在 ==========
               <div className={`mb-8 relative ${isVomiting ? 'animate-shake' : 'float-3d'}`}>
                 {/* 机器人外壳 - 添加破损效果 */}
-                <div className="w-48 h-48 bg-space-800 rounded-2xl flex items-center justify-center robot-damaged relative border-2 border-rust-500/30 shadow-2xl depth-shadow">
+                <div className="w-48 h-48 bg-space-800 rounded-2xl flex items-center justify-center robot-damaged relative border-2 border-rust-500/60 shadow-2xl depth-shadow">
                   {/* 锈迹装饰 */}
                   <div className="absolute top-4 right-4 w-8 h-1 bg-rust-400/40 rotate-45"></div>
                   <div className="absolute bottom-6 left-6 w-6 h-1 bg-rust-400/30 -rotate-12"></div>
@@ -1054,7 +1066,7 @@ export const QuestionVomitMachine: React.FC = () => {
                         <div className="absolute top-0 right-0 w-3 h-0.5 bg-rust-400 rotate-45"></div>
                       </div>
                     </div>
-                    <div className={`bg-space-700 mt-2 transition-all ${isVomiting ? 'h-12 w-20' : 'h-1 w-16'} rounded-full`}></div>
+                    <div className={`bg-space-950 mt-2 transition-all ${isVomiting ? 'h-12 w-20' : 'h-1.5 w-16'} rounded-full border border-space-700/50`}></div>
                   </div>
                 </div>
               </div>
@@ -1213,9 +1225,12 @@ export const QuestionVomitMachine: React.FC = () => {
                       <button
                         key={`unlock-day-${d}`}
                         onClick={() => {
-                          const frag = memoryFragmentService.getFragmentForDay(d);
+                          const frag = getMappedFragmentForDay(d);
                           if (frag) {
                             setCurrentMemoryFragment(frag);
+                            const updatedStreak = { ...streakData, currentStreak: d };
+                            saveStreakData(updatedStreak);
+                            setStreakData(updatedStreak);
                             // 直接走解锁流程，查看完整UI
                             memoryFragmentService.unlockFragment(
                               frag,
@@ -1235,25 +1250,18 @@ export const QuestionVomitMachine: React.FC = () => {
 
                 {/* 每日碎片解锁状态总览 */}
                 {(() => {
-                  const MAP: Record<number, string> = {
-                    1: 'c1-1', 2: 'c1-2', 3: 'c1-3', 4: 'c1-4', 5: 'c1-5', 6: 'c1-6',
-                    7: 'milestone-7',
-                    8: 'c2-1', 9: 'c2-2', 10: 'c2-3', 11: 'c2-4', 12: 'c2-5', 13: 'c2-6',
-                    14: 'milestone-14',
-                    15: 'c3-1', 16: 'c3-2', 17: 'c3-3', 18: 'c3-4', 19: 'c3-5', 20: 'c3-6',
-                    21: 'final'
-                  };
                   const storage = memoryFragmentService.getStorage();
                   return (
                     <div className="space-y-1 mb-3">
                       <p className="font-mono text-cyan-400/80">每日碎片解锁状态：</p>
                       <div className="flex gap-2 flex-wrap">
                         {Array.from({ length: 21 }, (_, i) => i + 1).map((d) => {
-                          const id = MAP[d];
+                          const frag = getMappedFragmentForDay(d);
+                          const id = DAY_FRAGMENT_MAP[d];
                           const unlocked = !!(id && storage.fragments[id]);
                           return (
                             <span key={`status-day-${d}`} className={`px-2 py-1 text-xs rounded border ${unlocked ? 'border-amber-400 text-amber-300 bg-amber-400/10' : 'border-space-600 text-cyan-400 bg-space-800/30'}`}>
-                              Day {d}: {unlocked ? '已解锁' : '未解锁'}
+                              Day {d}: {unlocked ? '已解锁' : (frag ? `待解锁(${frag.id})` : '无可用')}
                             </span>
                           );
                         })}

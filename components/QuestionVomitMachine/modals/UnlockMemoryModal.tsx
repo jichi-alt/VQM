@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface UnlockMemoryModalProps {
   isOpen: boolean;
@@ -25,8 +25,9 @@ export const UnlockMemoryModal = ({ isOpen, onConfirm }: UnlockMemoryModalProps)
 
   // 当弹窗打开时，检查是否有可用的碎片
   // 如果 onConfirm 无效（说明主组件检测到没有可用碎片），则立即关闭
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
+      setIsUnlocking(false);
       console.log('[UnlockMemoryModal] 弹窗已打开，等待用户点击解锁');
     }
   }, [isOpen]);

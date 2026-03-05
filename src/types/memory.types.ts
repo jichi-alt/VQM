@@ -25,8 +25,9 @@ export interface MemoryProgress {
       total: number;
       unlocked: number;
       fragments: Array<{
-        id: string;
+        fragment: MemoryFragment;
         unlocked: boolean;
+        record: FragmentRecord | null;
       }>;
     };
   };

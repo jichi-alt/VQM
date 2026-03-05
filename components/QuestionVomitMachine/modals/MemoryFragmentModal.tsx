@@ -71,7 +71,7 @@ export const MemoryFragmentModal = ({ isOpen, onClose, content, chapter, current
         {/* 中部：机器人头像 + 内容 */}
         <div className="px-6 py-6 flex flex-col items-center relative z-20">
           {/* 机器人小头像 - 破旧风格 + 3D浮动 */}
-          <div className="w-16 h-16 bg-space-800 rounded-xl flex items-center justify-center mb-4 border border-rust-500/30 robot-damaged relative float-3d depth-shadow">
+          <div className="w-16 h-16 bg-space-800 rounded-xl flex items-center justify-center mb-4 border border-rust-500/60 robot-damaged relative float-3d depth-shadow">
             {/* 扫描线 */}
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-400/10 to-transparent animate-scanline rounded-xl"></div>
             <div className="w-12 h-10 bg-space-850 rounded-lg flex flex-col items-center justify-center border border-space-700">

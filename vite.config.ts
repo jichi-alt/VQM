@@ -28,34 +28,6 @@ export default defineConfig(({ mode }) => {
 
     // 生产构建优化
     build: isProd ? {
-      // 代码分割配置
-      rollupOptions: {
-        output: {
-          // 手动分包策略
-          manualChunks: (id) => {
-            // Supabase 单独打包
-            if (id.includes('node_modules/@supabase/')) {
-              return 'supabase-vendor';
-            }
-            // GSAP 动画库单独打包
-            if (id.includes('node_modules/gsap/')) {
-              return 'gsap-vendor';
-            }
-            // Three.js 单独打包
-            if (id.includes('node_modules/three/') || id.includes('node_modules/@types/three/')) {
-              return 'three-vendor';
-            }
-            // 其他 node_modules 包
-            if (id.includes('node_modules/')) {
-              return 'vendor';
-            }
-          },
-          // 设置 chunk 文件命名格式
-          chunkFileNames: 'assets/js/[name]-[hash].js',
-          entryFileNames: 'assets/js/[name]-[hash].js',
-          assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
-        },
-      },
       // 启用源码映射 (生产环境建议关闭，这里仅用于调试)
       sourcemap: false,
       // 设置 chunk 大小警告阈值 (KB)

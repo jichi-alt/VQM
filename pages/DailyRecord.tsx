@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 import { Scanline } from '../components/Scanline';
 import { Noise } from '../components/Noise';
 import { BARCODE_URL } from '../constants';
-import { QuestionData } from '../types';
+import { QuestionData } from '../src/types';
 
 const SilentObserverModal = ({ isOpen, onClose, onConfirm, message }: {
   isOpen: boolean;

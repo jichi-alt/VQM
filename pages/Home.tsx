@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RobotFace } from '../components/RobotFace';
 import { SVG_DOTS, SVG_GRID } from '../constants';
-import { generatePhilosophicalQuestion } from '../services/geminiService';
-import { QuestionData } from '../types';
+import { generatePhilosophicalQuestion } from '../src/services/question.service';
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();

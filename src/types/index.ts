@@ -68,6 +68,15 @@ export interface ArchiveEntry {
   lastModified: string;
 }
 
+export interface ArchiveItem {
+  id: string;
+  date: string;
+  tag: string;
+  tagIcon: string;
+  question: string;
+  count: number;
+}
+
 // ==================== 问题相关 ====================
 
 export interface Question {

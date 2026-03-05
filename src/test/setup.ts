@@ -70,7 +70,5 @@ class MockAudioContext {
   suspend = vi.fn().mockResolvedValue(undefined);
   close = vi.fn().mockResolvedValue(undefined);
 }
-// @ts-expect-error 测试环境注入
-window.AudioContext = MockAudioContext;
-// @ts-expect-error 测试环境注入
+(window as any).AudioContext = MockAudioContext;
 (window as any).webkitAudioContext = MockAudioContext;

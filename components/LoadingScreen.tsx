@@ -50,7 +50,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
         <div className="mb-8 flex justify-center">
           <div className="relative">
             {/* 机器人头像 - CSS绘制破旧风格 */}
-            <div className="w-32 h-32 bg-space-800 rounded-2xl flex items-center justify-center robot-damaged relative border-2 border-rust-500/30 depth-shadow float-3d">
+            <div className="w-32 h-32 bg-space-800 rounded-2xl flex items-center justify-center robot-damaged relative border-2 border-rust-500/60 depth-shadow float-3d">
               {/* 锈迹装饰 */}
               <div className="absolute top-2 right-3 w-4 h-0.5 bg-rust-400/40 rotate-45"></div>
               <div className="absolute bottom-4 left-4 w-3 h-0.5 bg-rust-400/30 -rotate-12"></div>
@@ -72,7 +72,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
                     <div className="absolute top-0 right-0 w-2 h-0.5 bg-rust-400 rotate-45"></div>
                   </div>
                 </div>
-                <div className="bg-space-700 h-1 w-12 rounded-full"></div>
+                <div className="bg-space-950 h-1.5 w-12 rounded-full border border-space-700/50"></div>
               </div>
             </div>
 

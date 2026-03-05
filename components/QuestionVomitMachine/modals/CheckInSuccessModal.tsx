@@ -162,7 +162,7 @@ export const CheckInSuccessModal = ({ isOpen, onClose, onUnlock, day, isComplete
             {getMilestoneText()}
           </p>
           <p className={`mb-6 tracking-tight ${isMilestone ? 'text-2xl text-amber-300 glow-text scale-110' : 'text-xl text-amber-400'}`}>
-            这是你主动思考的第 {day} 天
+            恭喜你人类，这是你主动思考的第 {day} 天
           </p>
 
           {/* 进度可视化 */}

@@ -26,7 +26,7 @@ export const About: React.FC<AboutProps> = ({ onClose, onStart }) => {
         {/* 标题区 */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-space-800 rounded-xl flex items-center justify-center robot-damaged relative border-2 border-rust-500/30">
+            <div className="w-16 h-16 bg-space-800 rounded-xl flex items-center justify-center robot-damaged relative border-2 border-rust-500/60">
               <div className="text-4xl">🤖</div>
             </div>
           </div>

@@ -46,7 +46,12 @@ describe('AudioControl 组件', () => {
   });
 
   it('应该显示用户图标当用户已登录时', () => {
-    const mockUser = { id: '1', email: 'test@example.com' };
+    const mockUser = {
+      id: '1',
+      email: 'test@example.com',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z'
+    };
     render(<AudioControl currentUser={mockUser} onLogin={mockOnLogin} onLogout={mockOnLogout} />);
 
     // 检查是否有邮件图标的按钮（表示已登录用户）
